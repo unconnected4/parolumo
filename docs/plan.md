@@ -10,26 +10,31 @@ Decisions (see also `../intent.md` → Cross-cutting decisions, and each project
 - **Frontend:** React + Vite + TypeScript SPA; Android gets a separate native app later
 - The backend is a plain JSON API so the future Android app can use it unchanged
 
-## Step 0 — API schemas, fake provider and contract export
-- **Design Own API (by Alex):** Design the API around our application's needs (web UI atm), independent of any provider format. Yandex is the first of several providers; key acquisition, terms, and live integration wait until after the first backend with mocked functionality is built.
-- **Public Sense Identification:** The public `sense_id` in API responses and `POST /api/cards` is an opaque deterministic string owned by the backend (e.g. a hash of provider + lemma + pos + main translation). Clients never parse it. The fake provider computes it statelessly without a database, ensuring deterministic IDs for UI prototyping.
-- **Minimal Backend Slice:** Pydantic schemas (`Lexeme`, `Sense`), `DictionaryProvider` interface, and a `fake` provider with hand-authored data in our domain shape under `backend/app/providers/fake_data/<word>.json` (e.g. "run", "bank", "light", plus not-found). Unit tests verify the fake provider and stub routes.
-- **Contract & Example Export:** Export `docs/api/openapi.json` from stub routes via `uv run python -m app.export_openapi`. Export validated example responses (happy paths with `saved: false`, not-found case, error shape) via `uv run python -m app.export_examples` to `docs/api/examples/<endpoint>/<case>.json`.
-- **UI Mock Isolation (by Alex):** `web/` consumes mock fixtures only from `docs/api/examples/` through its own segregated MSW mock layer (`web/src/mocks/`), maintaining an in-memory set of saved cards to overlay `saved: bool` dynamically.
+## Step 0 — Web UI implementation (first, by Alex)
+- **Implement Web UI first, backend follows (by Alex):** "we are implementing web ui now. Based on them we will implement backend." Do not scaffold anything in `backend/` yet.
+- **Scaffold `web/`:** React + Vite + TypeScript SPA with Tailwind CSS.
+- **Mock data in `web/`:** Mock fixtures and MSW handlers are authored directly inside `web/src/mocks/` (e.g. for "run", "bank", "light", plus not-found case), designed around what the UI needs for search, cards, and vocabulary.
+- **Build Core UI Surfaces:**
+  - Search view: search input, phonetic transcription, client-side Web Speech audio playback.
+  - Senses grouped by Part of Speech (noun, verb, etc.).
+  - Sense card showing Russian gloss, synonyms, English meanings, example sentences, and interactive `+` → `✓` toggle.
+  - "My Words" view: list/deck of saved cards with local/mock state.
+- **Backend implementation follows:** Once the Web UI is built and verified, the proven UI data structures dictate the backend schemas, endpoints, and OpenAPI contract.
 
 ## Repo layout
 Monorepo with independently delivered projects. The full map is in the root [AGENTS.md](../AGENTS.md).
 ```
-backend/             FastAPI app (pyproject + uv), alembic/, app/{api,services,models,schemas,providers}, tests/
+backend/             FastAPI app (scaffolded in Step 1 based on Web UI)
 web/                 Vite + React + TS (with src/mocks/ for MSW)
 e2e/                 Playwright tests across web + backend
-docs/                shared docs; docs/api/openapi.json is the API contract; docs/api/examples/ for MSW fixtures
+docs/                shared docs; docs/api/openapi.json is the API contract
 docker-compose.yml   Postgres for local dev
 ```
-## Build strategy: UI-first prototyping
-Start outside-in from the UI (`web/`). Prototyping search results, sense cards with "+/✓" save interaction, "My words", and the Match game against real mapped API fixtures (served via MSW from `docs/api/examples/` and called through the generated API client) validates the UX and proves the exact data shape needed before freezing the database schema and backend persistence layer.
+## Build strategy: UI-first
+Start outside-in by building and validating the Web UI (`web/`) with its own mock layer before touching `backend/`. The UI defines the user experience, required fields, and interaction flows. The backend is then built to satisfy that proven contract.
 
-## Step 1 — Data model (Postgres)
+## Step 1 — Backend implementation & data model (based on Web UI)
+Scaffold `backend/` with `uv`, FastAPI, Pydantic schemas, and Postgres models matching the Web UI contract. Export `docs/api/openapi.json`, and transition `web/` to the generated client (`npm run gen:api`).
 - `users`: id, email, password_hash, created_at. Auth uses `fastapi-users` supporting cookie transport (for web) and bearer JWT (for Android).
 - `lexemes`: id, lemma, lang='en', pos, transcription. Unique on (lemma, pos).
 - `senses`: id, lexeme_id, source, source_key (matches the public `sense_id` string from Step 0), translation_ru, synonyms_ru[], meanings_en[], examples jsonb [{en, ru}].
