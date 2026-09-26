@@ -23,14 +23,16 @@ e2e/                 Playwright tests across web + backend
 docs/                shared docs; docs/api/openapi.json is the API contract
 docker-compose.yml   Postgres for local dev
 ```
+## Build strategy: UI-first prototyping
+Start outside-in from the UI (`web/`). Prototyping search results, sense cards with "+/✓" save interaction, "My words", and the Match game against realistic mock fixtures validates the UX and proves the exact data shape needed before freezing the database schema and OpenAPI contract.
 
 ## Step 1 — Data model (Postgres)
-- `users`: id, email, password_hash, created_at. Auth is email+password with JWT or a session cookie, via `fastapi-users` so we don't write auth ourselves.
+- `users`: id, email, password_hash, created_at. Auth uses `fastapi-users` supporting cookie transport (for web) and bearer JWT (for Android).
 - `lexemes`: id, lemma, lang='en', pos, transcription. Unique on (lemma, pos).
 - `senses`: id, lexeme_id, source='yandex', source_key, translation_ru, synonyms_ru[], meanings_en[], examples jsonb [{en, ru}]. Yandex has no sense IDs, so `source_key` is a stable hash of lemma+pos+main translation.
-- `user_cards`: id, user_id, sense_id, **a copy of the sense data**, created_at, plus SRS state (due_at, stability/interval, difficulty/ease, reps, lapses, state). Unique on (user_id, sense_id). The copy keeps the card intact if the dictionary data changes.
-- `review_logs`: card_id, reviewed_at, rating, source ('srs' | 'match_game'), previous and new state. This lets us change the SRS algorithm later without losing history.
-- `lookup_cache`: query and response json with a timestamp, used only if Yandex's terms allow it; otherwise this is only the rate limiter.
+- `user_cards`: id, user_id, sense_id, **a copy of the sense data**, optional `notes` (text) and `custom_example` (text), `created_at`, `deleted_at` (soft delete to preserve review logs), plus SRS state (due_at, stability/interval, difficulty/ease, reps, lapses, state). Unique on (user_id, sense_id) where `deleted_at IS NULL`. The copy keeps the card intact if dictionary data changes.
+- `review_logs`: card_id, reviewed_at, rating (1–4), source ('srs' | 'match_game'), previous and new state. Preserved even if card is deleted so the algorithm can change or train without losing history.
+- `lookup_cache`: query and response json with a timestamp / TTL, used as rate limiter and deduplicator.
 - SRS algorithm: start with FSRS (the `fsrs` Python package), wrapped in `services/srs.py`.
 
 ## Step 2 — Translator-dictionary
@@ -41,11 +43,12 @@ Backend:
 
 Web:
 - Login/register pages, a search box, results grouped by part of speech, and one sense card each (Russian translation, synonyms, English meanings, examples) with a "+" button that shows ✓ once saved. Plus a "My words" list page.
+- Audio pronunciation: Web Speech API (`speechSynthesis`) alongside phonetic transcription.
 - Show the Yandex credit line if the terms require it.
 
 ## Step 3 — Match game (outline, planned in detail later)
 - `GET /api/game/match?n=6` picks due or weak cards first, then fills from random cards.
-- Match results are logged with `source='match_game'` and only nudge SRS state lightly, because matching is a recognition task and pairs can be solved by elimination.
+- Match results are logged with `source='match_game'` and only nudge SRS state lightly (e.g. rating=3 on first-attempt match, rating=1 on mistake), because matching is a recognition task and pairs can be solved by elimination.
 
 ## Verification
 Testing tiers, CI and local setup are defined in [engineering.md](engineering.md).

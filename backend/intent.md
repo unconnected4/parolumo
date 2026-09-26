@@ -14,8 +14,9 @@ Scope: the multi-user JSON API behind every client. It covers auth, dictionary l
 - **Dictionary sources sit behind `DictionaryProvider`.** Implementations: `yandex` (live) and `fake` (recorded fixtures for dev/test/CI).
 - **Plain JSON API only.** No server-rendered HTML, so Android can reuse it unchanged. The spec is exported to `docs/api/openapi.json`.
 - **Layering:** `api/` (thin routes) → `services/` (logic) → `models/` + `providers/`. Routes never talk to providers directly.
+- **Auth transport:** `fastapi-users` supports dual transports simultaneously. Use `CookieTransport` (httpOnly, SameSite=lax) for the Web SPA (safe behind Vite proxy, no JS token storage), and keep `BearerTransport` enabled for future mobile/Android clients.
+- **Card retention:** `user_cards` uses soft deletion (`deleted_at TIMESTAMP NULL`) so user card removal never deletes `review_logs`, preserving SRS training history.
 
 ## Open questions
-- Auth transport: an httpOnly session cookie for web (safer, and simple behind the dev proxy) plus bearer JWT for Android later, or JWT everywhere? Decide before step 1 auth work.
 - Hosting and deploy target: TBD (see [../docs/engineering.md](../docs/engineering.md#delivery)).
 - Whether Yandex terms allow caching lookups (`lookup_cache`) or only rate limiting.
