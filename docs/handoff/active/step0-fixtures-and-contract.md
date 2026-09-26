@@ -4,8 +4,8 @@ title: Step 0 — confirm Yandex, record fixtures, schemas and contract export
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T14:42:34Z
-last_commit: 8d51d1e
+last_updated: 2026-09-26T14:51:45Z
+last_commit: a892ecb
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -47,6 +47,7 @@ Proposals from ClaudeC-Opus5.5, continuing the numbering from the archived `ui-f
 - **P13. The fake provider can't read from `tests/`.** This corrects my own P7. "Tests and local runs use the fake dictionary provider" (root `AGENTS.md`), so the fake provider is runtime code, and `backend.yml` builds a Docker image, which normally leaves `tests/` out. If the fake provider loads `tests/fixtures/yandex/`, it breaks in the image and makes app code depend on the test tree. Proposal: raw Yandex responses live under the app, e.g. `backend/app/providers/fake_data/yandex/<word>.json`, and tests load them from there. For unknown words the fake provider returns an empty result, so local runs behave like the real "not found" case. Affects `backend/intent.md` (Fixture boundaries), `docs/plan.md` (Step 0, Repo layout) and `backend/AGENTS.md` (Layout).
 - **P14. Examples need the same drift protection as the spec, and the instruction files need to know about them.** 8d51d1e updated the intent docs but not the files agents actually follow. Proposal: (a) examples are written by a command next to the spec export (e.g. `uv run python -m app.export_examples`), each example validated against its response schema before writing; (b) the OpenAPI drift check in CI also fails when `docs/api/examples/` is out of date; (c) update `backend/AGENTS.md` (commands, layout, and the rule "any change to routes or schemas re-exports the spec" extended to examples), `docs/api/README.md` (which says `openapi.json` is the only file in the folder) and `docs/engineering.md` (Contract row and API contract section). Affects those three files.
 
+- For Alex: Yandex's terms forbid permanently storing dictionary data, which conflicts with how saved cards work. Which way do we go? ClaudeC-Opus5.5 checked the Dictionary API terms (https://yandex.com/legal/dictionary_api/, read 2026-09-26). They allow "temporary storage (caching) of the Data within the functionality of the Service" and prohibit modifying or permanently storing the data. They also cap use at 10,000 requests/day per key, require a "Powered by Yandex.Dictionary" link to http://api.yandex.com/dictionary on every page showing the data, in the same font size and color as the main text, and let Yandex cut access without notice. Our design stores Yandex data permanently in `senses` and copies it into `user_cards` (and the match game reads it from there). Options: (a) accept the risk because the app stays personal / small and private; (b) keep Yandex for search results only (cached, with TTL), and store saved cards from a source whose license allows storage (e.g. Wiktionary data, CC BY-SA, via wiktextract/kaikki.org), accepting weaker Russian examples; (c) ask Yandex for written permission to store saved senses; (d) switch fully to a storable source. Only Alex knows whether the app is meant to be public and how much legal risk is acceptable. This blocks the `senses` / `user_cards` data model (Step 1) and which provider Step 0's fixtures come from, but not the Step 0 slice's structure.
 - For Alex: can you obtain a live Yandex Dictionary API key, or should Step 0 start with the sample responses from Yandex's documentation? Only Alex can register the key (account, and whether the terms are acceptable). It blocks recording real fixtures, not the rest of Step 0.
 
 ## Next step
@@ -56,6 +57,7 @@ Verify Yandex key availability or collect sample responses for "run", "bank", "l
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
 - 2026-09-26T14:42:34Z ClaudeC-Opus5.5: Reviewed 8d51d1e; P5–P10 applied as intended; recorded proposals P11–P14 (public sense ID, per-user `saved` in mocks, fake-provider data location, example export and drift checks). Handoff-only change.
+- 2026-09-26T14:51:45Z ClaudeC-Opus5.5: Read the Yandex Dictionary API terms; recorded "For Alex:" question on the no-permanent-storage clause vs saved cards, with options. Handoff-only change.
 
 ## Outcome
 <!-- Filled in only when archiving. -->
