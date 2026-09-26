@@ -3,12 +3,12 @@
 Product-level intent and cross-cutting decisions. Project-specific intent lives in [backend/intent.md](backend/intent.md) and [web/intent.md](web/intent.md). The detailed plan is in [docs/plan.md](docs/plan.md), and engineering conventions are in [docs/engineering.md](docs/engineering.md).
 
 ## Architecture / build order
-1. Web UI implementation (first, by Alex): implement the web SPA (search, sense cards with "+/✓", "My words") with mock data directly in `web/`. Do not scaffold anything in `backend/` yet. Based on the implemented web UI, we will implement the backend.
-2. Shared backend: multi-user, word/sense storage, SRS data model, FastAPI implementation of the contract proven by the Web UI.
-3. Translator-dictionary integration: connect web to live/fake backend provider.
-4. "Match the words" game, built against real per-user vocabulary data from step 3.
-5. Android after web is stable (a third project alongside `backend/` and `web/`)
-6. iOS only if there's demonstrated interest/traction
+0. Web UI implementation (first, by Alex): implement the web SPA (search, sense cards with "+/✓", "My words") with mock data directly in `web/`. Do not scaffold anything in `backend/` yet. Based on the implemented web UI, we will implement the backend.
+1. Shared backend: multi-user, word/sense storage, SRS data model, FastAPI implementation of the contract proven by the Web UI.
+2. Translator-dictionary integration: connect web to live/fake backend provider.
+3. "Match the words" game, built against real per-user vocabulary data from step 2.
+4. Android after web is stable (a third project alongside `backend/` and `web/`)
+5. iOS only if there's demonstrated interest/traction
 
 ## Cross-cutting decisions
 - **English → Russian only** for v1. A single pair lets us check the whole search → save → practice loop quickly.

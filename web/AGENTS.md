@@ -13,7 +13,7 @@ React + Vite + TypeScript SPA. Intent and decisions: [intent.md](intent.md). Sha
 ## Layout
 ```
 src/
-  api/         generated client. Do not edit by hand
+  api/         client and types (interim hand-written in Step 0, generated from Step 1)
   pages/       route-level components
   components/  reusable UI
   hooks/       TanStack Query hooks wrapping the API client
@@ -21,7 +21,7 @@ src/
 ```
 
 ## Rules
-- Call the backend only through the generated client in `src/api/`.
+- Call the backend only through `src/api/`. In Step 0, `src/api/` contains an interim typed client and models intercepted by MSW; in Step 1, it is replaced by the generated client (`npm run gen:api`).
 - Keep mocks segregated (by Alex): only the dev mock-mode entry point and test setup import `src/mocks/`. Production code never imports it or checks whether it is mocked.
 - Only `VITE_`-prefixed env vars reach the browser, and they must never contain secrets.
 - If a feature needs an API change, change the backend and spec first, then run `gen:api`. Never work around a missing endpoint on the client.

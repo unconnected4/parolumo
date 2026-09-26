@@ -13,12 +13,14 @@ Decisions (see also `../intent.md` → Cross-cutting decisions, and each project
 ## Step 0 — Web UI implementation (first, by Alex)
 - **Implement Web UI first, backend follows (by Alex):** "we are implementing web ui now. Based on them we will implement backend." Do not scaffold anything in `backend/` yet.
 - **Scaffold `web/`:** React + Vite + TypeScript SPA with Tailwind CSS.
-- **Mock data in `web/`:** Mock fixtures and MSW handlers are authored directly inside `web/src/mocks/` (e.g. for "run", "bank", "light", plus not-found case), designed around what the UI needs for search, cards, and vocabulary.
+- **API module & Types (P16):** `web/src/api/` defines the TypeScript models (`Lexeme`, `Sense`, `Card`, etc.) and a hand-written fetch client (`lookup`, `saveCard`, `deleteCard`, `listCards`). Production code imports only from `src/api/`, never from `src/mocks/`. In Step 1, this module is replaced by the generated client (`npm run gen:api`).
+- **Mock layer in `web/` (P16, P17):** MSW handlers and fixtures are authored directly in `web/src/mocks/` (e.g. for "run", "bank", "light", plus not-found and error cases). MSW intercepts network requests at `/api/...`, and an in-memory store overlays `saved: bool` dynamically. `docs/api/examples/` is dropped to avoid duplication.
 - **Build Core UI Surfaces:**
   - Search view: search input, phonetic transcription, client-side Web Speech audio playback.
   - Senses grouped by Part of Speech (noun, verb, etc.).
   - Sense card showing Russian gloss, synonyms, English meanings, example sentences, and interactive `+` → `✓` toggle.
   - "My Words" view: list/deck of saved cards with local/mock state.
+  - Simple mock auth header/session indicator (P19).
 - **Backend implementation follows:** Once the Web UI is built and verified, the proven UI data structures dictate the backend schemas, endpoints, and OpenAPI contract.
 
 ## Repo layout
