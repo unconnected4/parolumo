@@ -4,8 +4,8 @@ title: Step 0 — Web UI implementation with local mocks
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T18:30:18Z
-last_commit: 0e3f1e0
+last_updated: 2026-09-26T18:32:18Z
+last_commit: 7059470
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -53,12 +53,19 @@ The plan to write a thin backend slice before the Web UI has been dropped. All b
 - **Dynamic mock overlay for `saved` (P12):** MSW layer in `web/src/mocks/` maintains an in-memory set of saved sense IDs to overlay `saved: bool` on search results dynamically.
 
 ## Open questions
-None blocking Step 0 Web UI implementation.
+Proposals from ClaudeC-Opus5.5 after reviewing 7059470, to be answered by AgyD-Flash3.8 (accept → apply to the named docs; reject → record why under Tried and rejected). None of them question Alex's web-first decision; they make the docs and the `web/` layout consistent with it. P16 should be decided before writing `web/` code.
+
+- **P16. The UI's data types and API calls must not live in `src/mocks/`.** 7059470 says `web/` "defines its TypeScript models and MSW handlers directly in `src/mocks/`". But the segregation decision (by Alex) says production code never imports `src/mocks/`, and pages, hooks and components need those types. There is also no generated client yet, while `web/AGENTS.md` says to call the backend "only through the generated client in `src/api/`". Proposal: until Step 1, `web/src/api/` holds a small hand-written client (types for lexeme / sense / card, and functions like `lookup(q)`, `saveCard(senseId)`, `deleteCard(id)`, `listCards()` that call `/api/...` with `fetch`). Hooks use only this module. MSW in `src/mocks/` intercepts those requests at the network layer and imports the types from `src/api/`, never the other way round. In Step 1 the hand-written module is replaced by the generated client with the same function boundaries, so pages and hooks barely change, and any shape mismatch shows up as a type error. Affects `web/AGENTS.md` (Layout line for `api/`, and a temporary exception to the "generated client" rule until Step 1), `web/intent.md` (the generated-client decision) and `docs/plan.md` (Step 0).
+- **P17. Decide what happens to `docs/api/examples/` now that the UI comes first.** The accepted P12/P14 design has the backend export examples that MSW serves. Now MSW data is authored in `web/` first and the backend is built from it, so the export would duplicate data that already exists, and several docs still describe it as current: `backend/intent.md` (Fixture boundaries), `backend/AGENTS.md` (export command and rule), `docs/api/README.md`, and `docs/engineering.md` (Contract row and API contract section). The handoff's Done list says these were updated, but 7059470 didn't change `backend/AGENTS.md`, `docs/api/README.md` or `docs/engineering.md`. Proposal: drop the example export and its drift check. `web/src/mocks/` keeps owning its mock data permanently (it's also the future UI-only test data). From Step 1 the mock data is typed with the generated client's types, so `tsc` in web CI catches any shape drift from the contract. Update those four files so that `openapi.json` is the only shared artifact in `docs/api/`. Affects the four files named.
+- **P18. Step numbers differ between root `intent.md` and `docs/plan.md`.** Root build order step 1 (web UI) is plan Step 0; root step 2 (backend) is plan Step 1; root step 3 is plan Step 2. Agents cite "Step 1" in both senses (e.g. `backend/intent.md` "In Step 1, Postgres stores this"). Proposal: make the root build order and the plan use the same numbers, e.g. by numbering the root list from 0, or by referring to plan steps by name.
+- **P19. Is login/register part of the web-first UI?** `web/intent.md` lists login/register pages, and cookie auth shapes the UI flow (redirect when not signed in, per-user "My words"), but the Step 0 goal lists only search, sense cards and "My words". Proposal: include simple login/register screens with MSW-mocked auth in this step, so the backend in Step 1 is built against a proven auth flow too. If you think it belongs to a later step, record that in `docs/plan.md` Step 0.
+
+Other open questions:
 - Hosting for backend + Postgres and web SPA: TBD.
 - Yandex terms clarification and key registration: Deferred until after mocked backend is built (by Alex).
 
 ## Next step
-Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, set up local mock fixtures and MSW handlers in `web/src/mocks/`, and implement the search, sense cards, and "My words" UI surfaces.
+AgyD-Flash3.8: decide P16–P19 under Open questions (P16 before writing `web/` code), apply the accepted ones and record rejected ones under Tried and rejected. Then scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, set up local mock fixtures and MSW handlers in `web/src/mocks/`, and implement the search, sense cards, and "My words" UI surfaces.
 
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
@@ -69,6 +76,7 @@ Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, set up local mock
 - 2026-09-26T15:09:36Z AgyD-Flash3.8: Accepted P11–P14, synchronized docs/plan.md, backend/intent.md, web/intent.md, backend/AGENTS.md, docs/api/README.md, and docs/engineering.md with Alex's decisions. Ready for Step 0 backend scaffolding.
 - 2026-09-26T17:49:35Z ClaudeC-Opus5.5: Reviewed ec6f7d5; confirmed alignment on P11–P14 and both of Alex's decisions; fixed three stale lines still describing recorded Yandex fixtures (`docs/engineering.md` offline dictionary, `backend/intent.md` provider list, `docs/plan.md` Verification).
 - 2026-09-26T18:30:18Z AgyD-Flash3.8: Recorded Alex's instruction to implement Web UI now, defer all backend scaffolding, and author mocks directly in web/. Updated root intent.md, docs/plan.md, backend/intent.md, web/intent.md, and this handoff.
+- 2026-09-26T18:32:18Z ClaudeC-Opus5.5: Reviewed 7059470 (web UI first, by Alex); no objection to the decision; recorded proposals P16–P19 (types and client outside `src/mocks/`, fate of `docs/api/examples/` and stale docs, step numbering, auth screens in scope). Handoff-only change.
 
 ## Outcome
 <!-- Filled in only when archiving. -->
