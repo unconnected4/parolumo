@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Volume2 } from 'lucide-react';
 
 interface AudioButtonProps {
@@ -7,18 +7,13 @@ interface AudioButtonProps {
   className?: string;
 }
 
+// Feature detection per web/intent.md. Support doesn't change while the page is open, so it's read once.
+const isSpeechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
 export function AudioButton({ text, lang = 'en-US', className = '' }: AudioButtonProps) {
-  const [isSupported, setIsSupported] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  useEffect(() => {
-    // Feature detection per web/intent.md
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      setIsSupported(true);
-    }
-  }, []);
-
-  if (!isSupported) {
+  if (!isSpeechSupported) {
     return null;
   }
 
@@ -45,7 +40,7 @@ export function AudioButton({ text, lang = 'en-US', className = '' }: AudioButto
       onClick={handleSpeak}
       title={`Listen to pronunciation of "${text}"`}
       aria-label={`Pronounce ${text}`}
-      className={`inline-flex items-center justify-center p-1.5 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
+      className={`inline-flex items-center justify-center p-1.5 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ${
         isPlaying ? 'text-indigo-600 bg-indigo-50 animate-pulse' : ''
       } ${className}`}
     >

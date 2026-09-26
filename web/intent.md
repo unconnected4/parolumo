@@ -3,9 +3,9 @@
 Scope: the browser client, and the fast prototyping surface for every feature before Android. Product context: [../intent.md](../intent.md). Feature detail: [../docs/plan.md](../docs/plan.md).
 
 ## Stack
-- **React + Vite + TypeScript** SPA
-- Styling: **Tailwind CSS** for rapid responsive styling and easy theming
-- Routing: React Router. Server state: TanStack Query (no global store unless a real need appears)
+- **React 19 + Vite 8 + TypeScript 6** SPA, on Node.js 24 LTS (`engines` in `package.json`, CI uses the same). TypeScript stays on 6.x until typescript-eslint supports 7
+- Styling: **Tailwind CSS 4** (via `@tailwindcss/vite`, no config file) for rapid responsive styling and easy theming
+- Routing: React Router (`react-router` package). Server state: TanStack Query (no global store unless a real need appears)
 - Typed API client generated from `docs/api/openapi.json` (`openapi-typescript` + `openapi-fetch`)
 - Audio pronunciation: Web Speech API (`window.speechSynthesis`) is the primary audio source, with feature detection (`'speechSynthesis' in window` and voice check) to gracefully hide the button when unsupported
 - Tests: Vitest + Testing Library for components. Full-flow tests live in `../e2e`

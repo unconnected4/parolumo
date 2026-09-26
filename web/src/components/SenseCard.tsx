@@ -14,7 +14,7 @@ export function SenseCard({ sense, onSave, isSaving = false }: SenseCardProps) {
     <div
       className={`border rounded-xl p-4 transition-all duration-200 bg-white ${
         isSaved
-          ? 'border-emerald-200 bg-emerald-50/20 shadow-sm'
+          ? 'border-emerald-200 bg-emerald-50/20 shadow-xs'
           : 'border-slate-200 hover:border-indigo-200 hover:shadow-md'
       }`}
     >
@@ -65,7 +65,7 @@ export function SenseCard({ sense, onSave, isSaving = false }: SenseCardProps) {
               type="button"
               onClick={() => onSave(sense.id)}
               disabled={isSaving}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-xs disabled:opacity-60 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
               title="Save this sense to My Words"
             >
               {isSaving ? (

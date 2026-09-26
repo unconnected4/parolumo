@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { BookOpen, Search, Bookmark, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCards } from '../hooks/useCards';
@@ -9,7 +9,7 @@ export function Header() {
   const { cards } = useCards();
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-slate-200">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export function Header() {
           ) : (
             <Link
               to="/auth"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-xs"
             >
               <LogIn className="w-4 h-4" />
               <span>Sign In</span>

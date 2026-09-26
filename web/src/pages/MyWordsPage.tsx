@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router';
 import { Bookmark, Trash2, Search, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { useCards } from '../hooks/useCards';
 import { useAuth } from '../hooks/useAuth';
@@ -45,7 +45,7 @@ export function MyWordsPage() {
 
         <Link
           to="/"
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-xs transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Find more words</span>
@@ -61,7 +61,7 @@ export function MyWordsPage() {
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
             placeholder="Filter saved words by English or Russian..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-xs"
           />
         </div>
       )}
@@ -88,7 +88,7 @@ export function MyWordsPage() {
           </div>
           <Link
             to="/?q=run"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-xs transition-colors"
           >
             <Sparkles className="w-4 h-4" />
             <span>Try searching "run"</span>
@@ -113,7 +113,7 @@ export function MyWordsPage() {
                   {/* English lemma & POS */}
                   <div className="flex items-baseline gap-2.5 flex-wrap">
                     <span className="text-xl font-bold text-slate-900">{card.lemma}</span>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                    <span className="px-2 py-0.5 rounded-sm text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
                       {card.pos}
                     </span>
                     {card.transcription && (
@@ -155,7 +155,7 @@ export function MyWordsPage() {
 
                   {/* Notes if present */}
                   {card.notes && (
-                    <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1 mt-1 border border-amber-200">
+                    <p className="text-xs text-amber-700 bg-amber-50 rounded-sm px-2 py-1 mt-1 border border-amber-200">
                       Note: {card.notes}
                     </p>
                   )}
@@ -168,7 +168,7 @@ export function MyWordsPage() {
                     onClick={() => deleteCard(card.id)}
                     disabled={isDeleting && deletingCardId === card.id}
                     title="Remove from My Words"
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-hidden focus:ring-2 focus:ring-rose-500"
                   >
                     {isDeleting && deletingCardId === card.id ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Search as SearchIcon, X, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { useLookup } from '../hooks/useDictionary';
 import { useCards } from '../hooks/useCards';
@@ -69,7 +69,7 @@ export function SearchPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search an English word (e.g. run, bank, light)..."
-            className="w-full pl-12 pr-24 py-3.5 bg-white border border-slate-300 rounded-2xl shadow-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-lg transition-all"
+            className="w-full pl-12 pr-24 py-3.5 bg-white border border-slate-300 rounded-2xl shadow-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-lg transition-all"
             autoFocus
           />
           {searchTerm && (
@@ -84,7 +84,7 @@ export function SearchPage() {
           )}
           <button
             type="submit"
-            className="absolute right-2.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium rounded-xl text-sm transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+            className="absolute right-2.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium rounded-xl text-sm transition-colors shadow-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
           >
             Search
           </button>

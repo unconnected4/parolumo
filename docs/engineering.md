@@ -3,11 +3,17 @@
 Shared across `backend/`, `web/` and `e2e/`. Project-specific commands live in each project's AGENTS.md.
 
 ## Local development
+- **Prerequisite for web:** Node.js 24 LTS, with its folder on `PATH`. Package install scripts run `node` themselves, so calling npm by full path isn't enough: `npm ci` fails with "'node' is not recognized".
 - **Only infrastructure runs in Docker.** `docker compose up -d` starts Postgres (it also creates the `paralumo_test` database for integration tests). The API and the web app run natively so debuggers, hot reload and breakpoints work normally.
 - **Backend** on `http://localhost:8000` (`uv run uvicorn app.main:app --reload`), scaffolded in Step 1.
 - **Web** on `http://localhost:5173`. In Step 0 (before backend exists), run with local MSW mocks using `npm run dev:mock` (sets `VITE_API_MOCKS=1`). `main.tsx` dynamically imports `src/mocks/browser` only when this flag is set, tree-shaking MSW from production builds and excluding `public/mockServiceWorker.js` from production output. In Step 1 (with backend), `npm run dev` proxies `/api/*` to the backend (`http://localhost:8000`), so the browser sees one origin without CORS.
 - **Offline dictionary.** `DICTIONARY_PROVIDER=fake` makes the backend serve hand-authored data in our own domain shape from `backend/app/providers/fake_data/`. This is the default for local work, tests and CI, so development never depends on the network or burns the daily quota. Switch to `yandex` only when you need live data.
 - **Debugging.** `.vscode/launch.json` (added with the backend scaffolding) has *Backend: API*, *Backend: pytest current file* and *Web: Chrome* configs, plus a compound *Full stack* config that runs both at once. Start `npm run dev` first, because the Chrome config attaches to the running dev server. The backend configs load `backend/.env` and use the Windows venv path (`.venv/Scripts/python.exe`).
+
+## Dependencies and warnings
+- **No warnings (by Alex):** "I don't think it is ok to have warnings in the green field project". Install (`npm ci`, `uv sync`), lint, typecheck, tests and build must finish with no warnings, deprecation notices or console noise. A new warning is a defect to fix in the same change, not something to explain away. Check exit codes and read the full output (or log file), not just the last line.
+- **Current majors:** new dependencies start on the current major version. When a tool can't support the latest release yet (e.g. typescript-eslint and TypeScript 7), pin the newest version it supports and note why in the project's `intent.md`.
+- **Install scripts:** npm only runs dependency install scripts that are approved in `allowScripts` in `package.json` (`npm approve-scripts <pkg>`). Approve only what's needed, e.g. `msw`, whose script keeps `public/mockServiceWorker.js` in sync.
 
 ## Configuration and secrets
 - **All configuration comes from environment variables.** The backend reads them through one pydantic-settings `Settings` class (`backend/app/config.py`). Nothing reads `os.environ` directly.
