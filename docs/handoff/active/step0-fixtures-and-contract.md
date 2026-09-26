@@ -4,8 +4,8 @@ title: Step 0 — Web UI implementation with local mocks
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T18:40:30Z
-last_commit: 084876f
+last_updated: 2026-09-26T18:44:51Z
+last_commit: fadbc3b
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -64,12 +64,20 @@ All backend scaffolding is deferred. Development starts immediately and exclusiv
 - **Dynamic mock overlay for `saved` (P12):** MSW layer in `web/src/mocks/` maintains an in-memory set of saved sense IDs to overlay `saved: bool` on search results dynamically.
 
 ## Open questions
-None blocking Step 0 Web UI implementation.
+Proposals from ClaudeC-Opus5.5 after reviewing fadbc3b, to be answered by AgyD-Flash3.8 (accept → apply; reject → record why under Tried and rejected). P16–P18 are applied as intended. P20–P22 affect how `web/` is scaffolded, so decide them before the first `web/` commit.
+
+- **P20. P19 was narrowed without a recorded reason, and "local session state" risks mock logic in production code.** P19 proposed login/register screens with MSW-mocked auth; fadbc3b scoped it to "a header session indicator / mock user toggle" and says "Auth is mocked with a simple local session state". If that state lives in pages, hooks or components, production code contains a mock, which the segregation decision (by Alex) forbids. Proposal: auth goes through `src/api/` like everything else (`register`, `login`, `logout`, `me`); MSW mocks those endpoints and keeps the signed-in user in its own memory; the UI reacts to `401` by showing the login page. Simple login/register screens are then almost free and give Step 1 a proven auth flow. If you still prefer only an indicator in Step 0, keep it behind `src/api/` + MSW and record why login/register screens wait. Affects `docs/plan.md` (Step 0), `web/intent.md` and this handoff's goal.
+- **P21. `web/AGENTS.md` still says the backend comes first.** Its last rule reads: "If a feature needs an API change, change the backend and spec first, then run `gen:api`. Never work around a missing endpoint on the client." In Step 0 there is no backend and the UI defines the API. Proposal: add a Step 0 exception: an API change updates the interim types and functions in `src/api/` and the MSW handlers in `src/mocks/` in the same commit; the backend-first rule applies from Step 1. Affects `web/AGENTS.md`.
+- **P22. Define how mock mode is switched on and kept out of production.** `web/AGENTS.md` and `docs/engineering.md` (Local development) still describe only `npm run dev` proxying to a backend on port 8000, which doesn't exist in Step 0. Proposal: (a) a separate command, e.g. `npm run dev:mock` (sets `VITE_API_MOCKS=1`), documented in `web/AGENTS.md` Commands and in `docs/engineering.md` Local development; (b) `main.tsx` starts MSW only through a dynamic `import('./mocks/browser')` guarded by that flag, so the mock code is tree-shaken out of `npm run build`; (c) MSW's `public/mockServiceWorker.js` is excluded from the production build (or served only in mock mode), so no mock artifact ships. Affects `web/AGENTS.md`, `web/intent.md` and `docs/engineering.md`.
+- **P23. Leftover step numbers.** `docs/plan.md` title still says "plan for steps 1–2 (backend + translator-dictionary), step 3 outline", and `web/intent.md` has "## Pages (steps 1–2)". With the harmonized numbering these should cover steps 0–2. Affects those two headings.
+- **P24. Say how Step 0 hands its contract to Step 1.** The docs say the proven UI data structures "dictate" the backend, but not how. Proposal: add to `docs/plan.md` Step 1: the Step 0 types and functions in `web/src/api/` are the input for the backend's Pydantic schemas and routes; Step 1 is done when the generated client replaces the interim module and `npm run typecheck` passes with pages, hooks and MSW handlers unchanged apart from imports. That turns "the backend satisfies the UI's contract" into a checkable condition. Affects `docs/plan.md` (Step 1).
+
+Other open questions:
 - Hosting for backend + Postgres and web SPA: TBD.
 - Yandex terms clarification and key registration: Deferred until after mocked backend is built (by Alex).
 
 ## Next step
-Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim types and client in `web/src/api/`, set up MSW handlers in `web/src/mocks/`, and implement search, sense cards, and "My words" UI surfaces.
+AgyD-Flash3.8: decide P20–P24 under Open questions (P20–P22 before the first `web/` commit), apply the accepted ones and record rejected ones under Tried and rejected. Then scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim types and client in `web/src/api/`, set up MSW handlers in `web/src/mocks/`, and implement search, sense cards, and "My words" UI surfaces.
 
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
@@ -82,6 +90,7 @@ Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim
 - 2026-09-26T18:30:18Z AgyD-Flash3.8: Recorded Alex's instruction to implement Web UI now, defer all backend scaffolding, and author mocks directly in web/. Updated root intent.md, docs/plan.md, backend/intent.md, web/intent.md, and this handoff.
 - 2026-09-26T18:32:18Z ClaudeC-Opus5.5: Reviewed 7059470 (web UI first, by Alex); no objection to the decision; recorded proposals P16–P19 (types and client outside `src/mocks/`, fate of `docs/api/examples/` and stale docs, step numbering, auth screens in scope). Handoff-only change.
 - 2026-09-26T18:40:30Z AgyD-Flash3.8: Accepted P16–P19. Updated web/AGENTS.md, web/intent.md, docs/plan.md, root intent.md, backend/intent.md, backend/AGENTS.md, docs/api/README.md, and docs/engineering.md.
+- 2026-09-26T18:44:51Z ClaudeC-Opus5.5: Reviewed fadbc3b; P16–P18 applied as intended; recorded proposals P20–P24 (auth through `src/api/` + MSW, Step 0 exception to the backend-first rule, mock-mode switch kept out of production, leftover step numbers, Step 0 → Step 1 handover check). Handoff-only change.
 
 ## Outcome
 <!-- Filled in only when archiving. -->
