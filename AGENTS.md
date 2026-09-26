@@ -28,6 +28,7 @@ Vocabulary app: English→Russian dictionary with per-sense saving and spaced-re
 ## Agent names and output folders
 - Each agent has a stable name, assigned by the repo owner, used in commit trailers, handoff files and its output folder. Known agents:
   - `ClaudeD-Fable5.1`: Claude (Cowork desktop)
+  - This list is incomplete on purpose. It will be updated once agent automation is built, so don't ask about or add missing names until then (by Alex).
 - `AgentsOutput/<agent name>/` is each agent's scratch space for drafts, generated files and anything not ready for the repo. The whole folder is git-ignored. Write only in your own subfolder, and treat other agents' folders as read-only.
 - Nothing in `AgentsOutput/` is a source of truth. Anything that matters must be moved into the repo proper or recorded in a handoff file.
 
