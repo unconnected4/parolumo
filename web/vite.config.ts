@@ -8,9 +8,12 @@ import path from 'node:path';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  // `npm run dev:mock` runs Vite in mode "mock". The app itself checks a single flag,
+  // import.meta.env.VITE_API_MOCKS, so mode "mock" is exposed as that flag here.
   const isMockMode = mode === 'mock' || env.VITE_API_MOCKS === '1';
 
   return {
+    define: isMockMode ? { 'import.meta.env.VITE_API_MOCKS': JSON.stringify('1') } : undefined,
     plugins: [
       react(),
       tailwindcss(),

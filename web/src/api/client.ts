@@ -2,6 +2,17 @@ import type { Card, LookupResponse, User } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+/** A non-2xx response. `message` is the backend's `detail` when it sent one. */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let errorMsg = `API request failed: ${res.status} ${res.statusText}`;
@@ -15,9 +26,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
     } catch {
       // Keep default errorMsg if JSON parsing fails
     }
-    const err = new Error(errorMsg) as Error & { status?: number };
-    err.status = res.status;
-    throw err;
+    throw new ApiError(errorMsg, res.status);
   }
 
   if (res.status === 204) {

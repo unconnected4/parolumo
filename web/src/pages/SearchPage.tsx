@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { Search as SearchIcon, X, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { useLookup } from '../hooks/useDictionary';
 import { useCards } from '../hooks/useCards';
@@ -9,21 +9,81 @@ import { AudioButton } from '../components/AudioButton';
 
 const SAMPLE_WORDS = ['run', 'bank', 'light'];
 
+interface SearchFormProps {
+  initialTerm: string;
+  onSearch: (term: string) => void;
+  onClear: () => void;
+}
+
+// Owns the text being typed. It is remounted (keyed) whenever the active query changes,
+// so the input follows the URL on back/forward and links without an effect.
+function SearchForm({ initialTerm, onSearch, onClear }: SearchFormProps) {
+  const [searchTerm, setSearchTerm] = useState(initialTerm);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchTerm.trim();
+    if (trimmed) onSearch(trimmed);
+  };
+
+  const handleClear = () => {
+    setSearchTerm('');
+    onClear();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="relative flex items-center">
+      <div className="absolute left-4 text-slate-400 pointer-events-none">
+        <SearchIcon className="w-5 h-5" />
+      </div>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search an English word (e.g. run, bank, light)..."
+        className="w-full pl-12 pr-24 py-3.5 bg-white border border-slate-300 rounded-2xl shadow-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-lg transition-all"
+        autoFocus
+      />
+      {searchTerm && (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="absolute right-20 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+          title="Clear search"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+      <button
+        type="submit"
+        className="absolute right-2.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium rounded-xl text-sm transition-colors shadow-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+      >
+        Search
+      </button>
+    </form>
+  );
+}
+
 export function SearchPage() {
+  // The URL (`/?q=word`) is the single source of truth for the active search, so a shared link,
+  // a reload and the browser's back/forward buttons all show the same word.
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') || 'run';
-  const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [activeQuery, setActiveQuery] = useState(initialQuery);
+  const activeQuery = searchParams.get('q')?.trim() ?? '';
 
   const { data, isLoading, isError, error } = useLookup(activeQuery);
   const { saveCard, isSaving, savingSenseId } = useCards();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Saving needs an account; send signed-out users to sign in instead of failing with 401.
+  const search = (term: string) => setSearchParams({ q: term });
+  const clear = () => setSearchParams({});
+
+  // Saving needs an account; send signed-out users to sign in instead of failing with 401,
+  // and bring them back to this search afterwards.
   const handleSave = (senseId: string) => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      navigate('/auth', { state: { from: `${location.pathname}${location.search}` } });
       return;
     }
     saveCard(senseId);
@@ -31,28 +91,6 @@ export function SearchPage() {
 
   const isNotFound = error?.status === 404;
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = searchTerm.trim();
-    if (trimmed) {
-      setActiveQuery(trimmed);
-      setSearchParams({ q: trimmed });
-    }
-  };
-
-  const handleSelectSample = (word: string) => {
-    setSearchTerm(word);
-    setActiveQuery(word);
-    setSearchParams({ q: word });
-  };
-
-  const handleClear = () => {
-    setSearchTerm('');
-    setActiveQuery('');
-    setSearchParams({});
-  };
-
-  // Group senses by POS
   const lexemes = data?.lexemes || [];
   const primaryTranscription = lexemes.find((l) => l.transcription)?.transcription;
 
@@ -60,35 +98,7 @@ export function SearchPage() {
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Search Bar */}
       <section className="space-y-3">
-        <form onSubmit={handleSearch} className="relative flex items-center">
-          <div className="absolute left-4 text-slate-400 pointer-events-none">
-            <SearchIcon className="w-5 h-5" />
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search an English word (e.g. run, bank, light)..."
-            className="w-full pl-12 pr-24 py-3.5 bg-white border border-slate-300 rounded-2xl shadow-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-lg transition-all"
-            autoFocus
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="absolute right-20 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
-              title="Clear search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-          <button
-            type="submit"
-            className="absolute right-2.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium rounded-xl text-sm transition-colors shadow-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-          >
-            Search
-          </button>
-        </form>
+        <SearchForm key={activeQuery} initialTerm={activeQuery} onSearch={search} onClear={clear} />
 
         {/* Sample query shortcuts */}
         <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
@@ -100,7 +110,7 @@ export function SearchPage() {
             <button
               key={w}
               type="button"
-              onClick={() => handleSelectSample(w)}
+              onClick={() => search(w)}
               className={`px-2.5 py-1 rounded-full border transition-all ${
                 activeQuery.toLowerCase() === w
                   ? 'bg-indigo-100 border-indigo-300 text-indigo-700 font-semibold shadow-xs'
@@ -168,8 +178,8 @@ export function SearchPage() {
 
           {/* Senses grouped by Part of Speech */}
           <div className="space-y-8">
-            {lexemes.map((lexeme, lexIdx) => (
-              <div key={lexIdx} className="space-y-3">
+            {lexemes.map((lexeme) => (
+              <div key={`${lexeme.lemma}-${lexeme.pos}`} className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800">
                     {lexeme.pos}

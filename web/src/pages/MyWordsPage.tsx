@@ -13,7 +13,7 @@ export function MyWordsPage() {
 
   // "My words" is per-user: signed-out visitors go to sign in rather than seeing an empty deck.
   if (!isAuthLoading && !isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace state={{ from: '/my-words' }} />;
   }
 
   const filteredCards = cards.filter((card) => {

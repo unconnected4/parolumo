@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -11,25 +11,28 @@ describe('Paralumo App', () => {
     window.history.pushState({}, '', '/');
   });
 
-  it('renders search view by default with header and initial search results', async () => {
+  it('renders the header and an empty search state by default', async () => {
     render(<App />);
 
     expect(screen.getByText('Paralumo')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /search/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /my words/i })).toBeInTheDocument();
-
-    // Default query "run" loads
-    await waitFor(() => {
-      expect(screen.getByText('бежать')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Enter a word to explore senses')).toBeInTheDocument();
   });
 
-  it('allows searching for another word like "bank"', async () => {
+  it('searches the word given in the URL', async () => {
+    window.history.pushState({}, '', '/?q=run');
+    render(<App />);
+
+    expect(await screen.findByText('бежать')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search an english word/i)).toHaveValue('run');
+  });
+
+  it('allows searching for another word like "bank" and records it in the URL', async () => {
     const user = userEvent.setup();
     render(<App />);
 
     const input = screen.getByPlaceholderText(/search an english word/i);
-    await user.clear(input);
     await user.type(input, 'bank');
     await user.click(screen.getByRole('button', { name: /^search$/i }));
 
@@ -37,6 +40,25 @@ describe('Paralumo App', () => {
       expect(screen.getByText('банк')).toBeInTheDocument();
       expect(screen.getByText('берег')).toBeInTheDocument();
     });
+    expect(window.location.search).toBe('?q=bank');
+  });
+
+  it('follows the browser back button to the previous search', async () => {
+    const user = userEvent.setup();
+    window.history.pushState({}, '', '/?q=bank');
+    render(<App />);
+    await screen.findByText('банк');
+
+    await user.click(screen.getByRole('button', { name: 'light' }));
+    await screen.findByText('свет');
+
+    await act(async () => {
+      window.history.back();
+    });
+
+    expect(await screen.findByText('банк')).toBeInTheDocument();
+    expect(screen.queryByText('свет')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search an english word/i)).toHaveValue('bank');
   });
 
   it('navigates to My Words page and displays saved cards', async () => {
@@ -65,6 +87,7 @@ describe('Paralumo App', () => {
         HttpResponse.json({ detail: 'Dictionary provider unavailable' }, { status: 502 })
       )
     );
+    window.history.pushState({}, '', '/?q=run');
     render(<App />);
 
     expect(await screen.findByText('Lookup failed', {}, { timeout: 5000 })).toBeInTheDocument();
@@ -76,22 +99,30 @@ describe('Paralumo App', () => {
     window.history.pushState({}, '', '/my-words');
     render(<App />);
 
-    expect(await screen.findByPlaceholderText('you@example.com')).toBeInTheDocument();
+    expect(await screen.findByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /my words/i })).not.toBeInTheDocument();
   });
 
-  it('sends a signed-out user who clicks Save to sign in', async () => {
+  it('sends a signed-out user who clicks Save to sign in, then back to the same search', async () => {
     const user = userEvent.setup();
     await logout();
+    window.history.pushState({}, '', '/?q=run');
     render(<App />);
 
     const saveButtons = await screen.findAllByRole('button', { name: /^save$/i });
     await user.click(saveButtons[0]);
 
-    expect(await screen.findByPlaceholderText('you@example.com')).toBeInTheDocument();
+    await user.type(await screen.findByLabelText(/email address/i), 'learner@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123{enter}');
+
+    expect(await screen.findByText('бежать')).toBeInTheDocument();
+    expect(window.location.search).toBe('?q=run');
+    // The lookup was cached while signed out; signing in refetches it with this user's saved flags.
+    expect(await screen.findByText('Saved')).toBeInTheDocument();
   });
 
   it('does not show mock-only labels in the UI', async () => {
+    window.history.pushState({}, '', '/?q=run');
     render(<App />);
     await screen.findByText('бежать');
 

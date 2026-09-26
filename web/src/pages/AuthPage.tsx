@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { LogIn, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 export function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, register, isLoggingIn, isRegistering, loginError, registerError } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -14,6 +15,9 @@ export function AuthPage() {
   const isLoading = isLoggingIn || isRegistering;
   const error = (mode === 'login' ? loginError : registerError)?.message;
 
+  // Pages that redirect here pass where the user was, so they land back there once signed in.
+  const returnTo = (location.state as { from?: string } | null)?.from ?? '/my-words';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -22,7 +26,7 @@ export function AuthPage() {
       } else {
         await register({ email, password });
       }
-      navigate('/my-words');
+      navigate(returnTo, { replace: true });
     } catch {
       // Error handled in hook and rendered below
     }
@@ -67,11 +71,16 @@ export function AuthPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label
+              htmlFor="auth-email"
+              className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+            >
               Email Address
             </label>
             <input
+              id="auth-email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -81,11 +90,16 @@ export function AuthPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label
+              htmlFor="auth-password"
+              className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
+            >
               Password
             </label>
             <input
+              id="auth-password"
               type="password"
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

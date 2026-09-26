@@ -42,8 +42,3 @@ export interface User {
   id: string;
   email: string;
 }
-
-export interface ApiError {
-  message: string;
-  status?: number;
-}

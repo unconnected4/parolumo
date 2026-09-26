@@ -13,3 +13,8 @@ cp backend/.env.example backend/.env                   # then edit
 cd backend && uv sync && uv run alembic upgrade head && uv run uvicorn app.main:app --reload
 cd web && npm ci && npm run dev                        # http://localhost:5173
 ```
+
+## Quick start today (Step 0: web UI only, no backend yet)
+```bash
+cd web && npm ci && npm run dev:mock                   # http://localhost:5173, API mocked by MSW
+```

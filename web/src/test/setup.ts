@@ -5,7 +5,8 @@ import { handlers, resetMockStore } from '../mocks/handlers';
 
 export const server = setupServer(...handlers);
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
+// Every request the app makes must have a handler: a typo in a URL fails the test instead of hanging.
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   server.resetHandlers();
   resetMockStore();

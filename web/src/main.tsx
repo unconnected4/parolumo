@@ -4,8 +4,9 @@ import App from './App';
 import './index.css';
 
 async function prepareApp(): Promise<void> {
-  // P22: Only import and enable MSW mock layer when explicitly in mock mode
-  if (import.meta.env.VITE_API_MOCKS === '1' || import.meta.env.MODE === 'mock') {
+  // P22: Only import and enable the MSW mock layer when explicitly in mock mode
+  // (`npm run dev:mock`, or VITE_API_MOCKS=1 in the environment).
+  if (import.meta.env.VITE_API_MOCKS === '1') {
     try {
       const { enableMocking } = await import('./mocks/browser');
       await enableMocking();

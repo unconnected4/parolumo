@@ -52,6 +52,7 @@ The first e2e test covers the loop from the plan: register, search "run", add tw
   - `web.yml`: lint (eslint), typecheck (tsc), unit tests (vitest), client drift check, production build
   - `e2e.yml`: full-stack Playwright run on PRs touching `backend/`, `web/` or `e2e/`
 - **Each pipeline arrives with its project:** `backend.yml` in the commit that scaffolds the backend, `web.yml` with the web app, and `e2e.yml` with the first e2e test. Each is written against the real commands and passes on its first run. Until then, drafts are kept in `AgentsOutput/` (git-ignored).
+- **No workflows are committed for now (by Alex):** the first `web.yml` was removed in 67eb91b "while infra is not ready". Don't re-add workflows until Alex says the infrastructure is in place; the checks they would run (lint, typecheck, tests, build) are still required locally before every commit.
 - **Deploy: TBD with hosting.** Planned shape: merging to `main` builds and deploys only the changed project, and the backend runs `alembic upgrade head` as a release step before the new version takes traffic. Migrations must be backward-compatible with the previous backend release (expand → migrate → contract).
 - **Environments:** local and production to start. Add staging if we have real users before Android.
 
