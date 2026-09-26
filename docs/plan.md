@@ -56,5 +56,5 @@ Web:
 ## Verification
 Testing tiers, CI and local setup are defined in [engineering.md](engineering.md).
 
-- Backend: `pytest` covering the Yandex→model mapping (against recorded JSON fixtures), the card save/unsave endpoints and their uniqueness, FSRS scheduling, and per-user isolation.
+- Backend: `pytest` covering the fake provider and stub routes (Step 0), the Yandex→model mapping against recorded provider responses (once Yandex is integrated), the card save/unsave endpoints and their uniqueness, FSRS scheduling, and per-user isolation.
 - End to end: automated in `e2e/` (Playwright, fake dictionary provider). Register, search "run", add two senses, and check they appear in "My words" and in `user_cards`.

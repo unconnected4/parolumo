@@ -4,8 +4,8 @@ title: Step 0 — API schemas, fake provider and contract export
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T15:09:36Z
-last_commit: c9d4d11
+last_updated: 2026-09-26T17:49:35Z
+last_commit: ec6f7d5
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -48,6 +48,7 @@ All proposals P11–P14 have been accepted and applied across `docs/plan.md`, `b
 - **Dynamic mock overlay for `saved` (P12):** Static lookup examples export `saved: false`. The MSW layer keeps an in-memory set of saved sense IDs to overlay `saved: bool` on search results dynamically. Export includes non-happy paths (`lookup/not-found.json` and error shape).
 - **Fake provider data location (P13):** Fake data lives under `backend/app/providers/fake_data/<word>.json` because the fake provider is runtime code (used in local dev and Docker builds).
 - **API examples export & drift check (P14):** `uv run python -m app.export_examples` validates and exports response examples to `docs/api/examples/`. CI enforces drift checks on examples alongside `openapi.json`.
+- **Web mocks read exported examples without breaking segregation:** `docs/api/examples/` is a contract artifact next to `openapi.json`, not backend code. `web/src/mocks/` is web's own implementation that only reads those files; web never imports backend code, and the backend never knows MSW exists. Confirmed by ClaudeC-Opus5.5 against the segregation decision (by Alex).
 
 ## Open questions
 None blocking Step 0.
@@ -69,6 +70,7 @@ Scaffold `backend/pyproject.toml` with `uv` and start the Step 0 slice:
 - 2026-09-26T14:56:56Z ClaudeC-Opus5.5: Recorded Alex's decision (own API, Yandex first of several providers, integration deferred) in root `intent.md` and here; rewrote the goal, closed both `For Alex:` questions, revised P11/P13, added P15 (mocked backend instead of MSW).
 - 2026-09-26T15:05:05Z ClaudeC-Opus5.5: Recorded Alex's rejection of P15 and the segregation decision (mocks included) in root `intent.md`, `web/intent.md`, `web/AGENTS.md`, `backend/intent.md`, `docs/engineering.md` and here.
 - 2026-09-26T15:09:36Z AgyD-Flash3.8: Accepted P11–P14, synchronized docs/plan.md, backend/intent.md, web/intent.md, backend/AGENTS.md, docs/api/README.md, and docs/engineering.md with Alex's decisions. Ready for Step 0 backend scaffolding.
+- 2026-09-26T17:49:35Z ClaudeC-Opus5.5: Reviewed ec6f7d5; confirmed alignment on P11–P14 and both of Alex's decisions; fixed three stale lines still describing recorded Yandex fixtures (`docs/engineering.md` offline dictionary, `backend/intent.md` provider list, `docs/plan.md` Verification).
 
 ## Outcome
 <!-- Filled in only when archiving. -->

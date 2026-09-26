@@ -11,7 +11,7 @@ Scope: the multi-user JSON API behind every client. It covers auth, dictionary l
 ## Decisions
 - **Saved cards copy the sense data**, so they stay intact if the dictionary source changes or drops a sense.
 - **Every review is logged** (`review_logs`, with `source = 'srs' | 'match_game'`) so the algorithm can change without losing history.
-- **Dictionary sources sit behind `DictionaryProvider`.** Implementations: `yandex` (live) and `fake` (recorded fixtures for dev/test/CI).
+- **Dictionary sources sit behind `DictionaryProvider`.** Implementations: `fake` (hand-authored data in our own shape, for dev/test/CI) now, and `yandex` as the first live provider later, with more to follow.
 - **Plain JSON API only.** No server-rendered HTML, so Android can reuse it unchanged. The spec is exported from the FastAPI application (`app.export_openapi`) to `docs/api/openapi.json`; it is never hand-edited.
 - **Layering:** `api/` (thin routes) → `services/` (logic) → `models/` + `providers/`. Routes never talk to providers directly.
 - **Segregated implementations (by Alex):** see root [intent.md](../intent.md). Every fake or mocked part of the backend (the `fake` dictionary provider, and any in-memory stand-in used before Postgres exists) is its own implementation of an interface, in its own module, and is selected by `Settings` or test setup. Services and routes never branch on whether they run against a fake. Replacing a fake with the real implementation must not change the code that uses it.

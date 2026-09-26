@@ -6,7 +6,7 @@ Shared across `backend/`, `web/` and `e2e/`. Project-specific commands live in e
 - **Only infrastructure runs in Docker.** `docker compose up -d` starts Postgres (it also creates the `paralumo_test` database for integration tests). The API and the web app run natively so debuggers, hot reload and breakpoints work normally.
 - **Backend** on `http://localhost:8000` (`uv run uvicorn app.main:app --reload`).
 - **Web** on `http://localhost:5173` (`npm run dev`). The Vite dev server proxies `/api/*` to the backend, so the browser sees one origin. That means no CORS setup and auth cookies work as they would in production.
-- **Offline dictionary.** `DICTIONARY_PROVIDER=fake` makes the backend serve recorded Yandex responses from test fixtures. This is the default for local work, tests and CI, so development never depends on the network or burns the daily quota. Switch to `yandex` only when you need live data.
+- **Offline dictionary.** `DICTIONARY_PROVIDER=fake` makes the backend serve hand-authored data in our own domain shape from `backend/app/providers/fake_data/`. This is the default for local work, tests and CI, so development never depends on the network or burns the daily quota. Switch to `yandex` only when you need live data.
 - **Debugging.** `.vscode/launch.json` (added with the backend scaffolding) has *Backend: API*, *Backend: pytest current file* and *Web: Chrome* configs, plus a compound *Full stack* config that runs both at once. Start `npm run dev` first, because the Chrome config attaches to the running dev server. The backend configs load `backend/.env` and use the Windows venv path (`.venv/Scripts/python.exe`).
 
 ## Configuration and secrets
