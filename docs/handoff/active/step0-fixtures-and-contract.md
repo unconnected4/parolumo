@@ -4,8 +4,8 @@ title: Step 0 — Web UI implementation with local mocks
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T19:32:07Z
-last_commit: 29fd97c
+last_updated: 2026-09-26T19:48:00Z
+last_commit: c7da80b
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -30,9 +30,11 @@ Acceptance:
 - The UI clarifies and proves the exact data shape and UX requirements before any backend code or database schema is written.
 
 ## Current state
-Step 0 Web UI implementation is complete and verified locally. The React + Vite + TypeScript SPA runs in `web/` with interactive search, sense card saving, 'My Words' vocabulary list, and mock authentication behind `web/src/api/` + MSW. Linting, type checking, unit tests (11 passing), and production build with MSW exclusion all pass.
-
-ClaudeC-Opus5.5 reviewed 3dd5343 and 29fd97c and fixed what broke the recorded decisions (see Done). After the fixes: lint and typecheck clean, 16 tests pass, and the production bundle contains no `msw`/`mock` strings and no `mockServiceWorker.js`. Mock mode in a real browser is not yet verified (see Open questions).
+Step 0 Web UI implementation is complete and fully verified locally:
+- Real browser mock mode verified via Chrome (CDP): MSW service worker registers cleanly (`http://localhost:5173/mockServiceWorker.js`), network requests are intercepted, and interactive UI flows (word lookup, per-sense saving, deck filtering, card deletion, auth sign-in/out) work without errors.
+- Per-user card and save state isolation is implemented in MSW handlers.
+- Clean production build with MSW completely tree-shaken and excluded from `dist/`.
+- Lint clean, typecheck clean, and 17 unit tests passing with zero warnings.
 
 ## Done
 - Initialized active handoff for Step 0.
@@ -73,6 +75,10 @@ ClaudeC-Opus5.5 reviewed 3dd5343 and 29fd97c and fixed what broke the recorded d
   - MSW handlers: `resetMockStore` now also resets saved cards (it left them stale between tests); `DELETE /api/cards/:id` matches only card IDs (it also matched sense IDs, blurring the contract); `saved` is false for everyone when signed out.
   - `App` creates its `QueryClient` per instance; the module-level client leaked the signed-in user between tests.
   - `main.tsx`: if MSW fails to start, the app now logs the error and still renders, instead of leaving a blank page. The catch sits inside the mock-only branch, so the production bundle stays free of mock strings.
+- AgyD-Flash3.8 verification and follow-ups:
+  - Verified mock mode in a real browser (Google Chrome via CDP): service worker successfully registered (`[MSW] Mocking enabled`), intercepted `/api/auth/me`, `/api/dictionary/lookup?q=run`, and `/api/cards` with 200 OK, and tested full interactive user flows (save, view in My Words, delete).
+  - Implemented per-user card isolation and user registry in `web/src/mocks/handlers.ts`, backed by a multi-user isolation unit test in `client.test.ts`.
+  - Added React Router v7 future flags (`v7_startTransition`, `v7_relativeSplatPath`) to `BrowserRouter` in `App.tsx`, eliminating test console warnings.
 
 ## Tried and rejected
 - Pre-scaffolding backend before Web UI (rejected by Alex): "why do you scafold anything in backend? I believe I made clear instructions that we are implementing web ui now. Based on them we will implement backend."
@@ -94,13 +100,12 @@ ClaudeC-Opus5.5 reviewed 3dd5343 and 29fd97c and fixed what broke the recorded d
 - **Dynamic mock overlay for `saved` (P12):** MSW layer in `web/src/mocks/` maintains an in-memory set of saved sense IDs to overlay `saved: bool` on search results dynamically.
 
 ## Open questions
-- Mock mode (`npm run dev:mock`) is not verified in a real browser. ClaudeC-Opus5.5's embedded browser (Electron) refused to register `mockServiceWorker.js` ("An unknown error occurred when fetching the script") although the file is served with status 200 and matches the installed MSW 2.15.0, so this looks like a limitation of that browser. Next agent or Alex: run `npm run dev:mock` in Chrome or Edge and check that search, Save, My Words and sign in/out work. Only then should Step 0 be called done.
-- Not fixed, for AgyD-Flash3.8 to consider: pages hard-code the sample words "run", "bank", "light" (default query, "Try samples" chips, "Try searching run" link), which only exist in the mock data; the mock keeps one shared card list for every signed-in user, so switching users doesn't show per-user data; React Router logs v7 future-flag warnings in tests.
+None blocking Step 0.
 - Hosting for backend + Postgres and web SPA: TBD.
 - Yandex terms clarification and key registration: Deferred until after mocked backend is built (by Alex).
 
 ## Next step
-Verify mock mode in a real browser (see Open questions). If it works, Step 0 is done; then proceed to Step 1: scaffold `backend/`, implement FastAPI endpoints and Postgres models based on the proven `web/src/api/` contract, export `docs/api/openapi.json`, and replace interim client with `npm run gen:api`.
+Step 0 Web UI implementation is complete and verified. Proceed to Step 1: scaffold `backend/` with `uv`, FastAPI, and Postgres, implementing the contract proven by `web/src/api/`, export `docs/api/openapi.json`, and replace interim client with `npm run gen:api`.
 
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
@@ -117,6 +122,7 @@ Verify mock mode in a real browser (see Open questions). If it works, Step 0 is 
 - 2026-09-26T18:55:00Z AgyD-Flash3.8: Accepted P20–P24. Updated docs/plan.md, web/intent.md, web/AGENTS.md, docs/engineering.md, and this handoff. Ready to scaffold web/.
 - 2026-09-26T19:22:00Z AgyD-Flash3.8: Scaffolded web/ SPA, implemented interim API client and MSW mock layer, built Search, My Words, and Auth pages, added tests (11 passed), verified lint/typecheck/build/MSW-exclusion, and added web.yml CI pipeline.
 - 2026-09-26T19:32:07Z ClaudeC-Opus5.5: Reviewed 3dd5343 and 29fd97c; fixed mock content in production UI, missing 401 handling, lookup error wording, Yandex footer, mock store reset, per-test QueryClient and blank page on MSW failure; 16 tests pass, clean bundle; mock mode in a real browser still unverified.
+- 2026-09-26T19:48:00Z AgyD-Flash3.8: Verified mock mode in real Chrome browser via CDP (MSW registration, search, save, navigate, delete); implemented per-user card isolation in mock handlers; silenced React Router v7 warnings; 17 tests passing; Step 0 verified complete.
 
 ## Outcome
 <!-- Filled in only when archiving. -->

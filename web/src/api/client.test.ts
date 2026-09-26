@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { lookup, listCards, saveCard, deleteCard, getMe, login, logout } from './client';
+import { lookup, listCards, saveCard, deleteCard, getMe, login, logout, register } from './client';
 
 describe('API client (interim Step 0)', () => {
   it('lookup returns lexemes and senses for known word "run"', async () => {
@@ -49,5 +49,33 @@ describe('API client (interim Step 0)', () => {
 
     const loggedInUser = await login({ email: 'new@example.com', password: 'password123' });
     expect(loggedInUser.email).toBe('new@example.com');
+  });
+
+  it('isolates saved cards and saved flag between different users', async () => {
+    // User 1 has the seeded card "run"
+    const user1Cards = await listCards();
+    expect(user1Cards.length).toBe(1);
+    expect(user1Cards[0].lemma).toBe('run');
+
+    // Register User 2
+    await register({ email: 'user2@example.com', password: 'secret123' });
+    const user2Cards = await listCards();
+    expect(user2Cards).toEqual([]);
+
+    // Senses for User 2 show saved: false
+    const lookupResUser2 = await lookup('run');
+    expect(lookupResUser2.lexemes[0].senses[0].saved).toBe(false);
+
+    // User 2 saves bank
+    await saveCard('sense_bank_n_1');
+    const user2Updated = await listCards();
+    expect(user2Updated.length).toBe(1);
+    expect(user2Updated[0].lemma).toBe('bank');
+
+    // Log back in as User 1
+    await login({ email: 'learner@example.com', password: 'pwd' });
+    const user1After = await listCards();
+    expect(user1After.length).toBe(1);
+    expect(user1After[0].lemma).toBe('run');
   });
 });

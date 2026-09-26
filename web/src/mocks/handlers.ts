@@ -29,9 +29,23 @@ const initialCards = (): Card[] => [
   },
 ];
 
+const userCardsStore = new Map<string, Card[]>();
+const registeredUsers = new Map<string, User>([
+  ['learner@example.com', { id: 'usr_mock_1', email: 'learner@example.com' }],
+]);
+
+function getCardsForUser(userId: string): Card[] {
+  if (!userCardsStore.has(userId)) {
+    if (userId === 'usr_mock_1') {
+      userCardsStore.set(userId, initialCards());
+    } else {
+      userCardsStore.set(userId, []);
+    }
+  }
+  return userCardsStore.get(userId)!;
+}
+
 let currentUser: User | null = initialUser();
-const savedCards: Card[] = initialCards();
-const savedSenseIds = new Set<string>(savedCards.map((c) => c.sense_id));
 
 function findSenseAcrossFixtures(senseId: string): { sense: Sense; lexeme: Lexeme } | null {
   for (const lexemes of Object.values(MOCK_DICTIONARY_FIXTURES)) {
@@ -65,6 +79,9 @@ export const handlers = [
     }
 
     // Dynamic overlay for `saved` state (P12). Saved is per-user, so nothing is saved when signed out.
+    const userCards = currentUser ? getCardsForUser(currentUser.id) : [];
+    const savedSenseIds = new Set(userCards.map((c) => c.sense_id));
+
     const overlaidLexemes: Lexeme[] = fixture.map((lex) => ({
       ...lex,
       senses: lex.senses.map((s) => ({
@@ -84,7 +101,7 @@ export const handlers = [
     if (!currentUser) {
       return HttpResponse.json({ detail: 'Authentication required' }, { status: 401 });
     }
-    return HttpResponse.json(savedCards);
+    return HttpResponse.json(getCardsForUser(currentUser.id));
   }),
 
   // 3. Save Card
@@ -103,10 +120,8 @@ export const handlers = [
       return HttpResponse.json({ detail: 'Sense not found' }, { status: 404 });
     }
 
-    savedSenseIds.add(body.sense_id);
-
-    // If card already exists in list, return it
-    const existing = savedCards.find((c) => c.sense_id === body.sense_id);
+    const userCards = getCardsForUser(currentUser.id);
+    const existing = userCards.find((c) => c.sense_id === body.sense_id);
     if (existing) {
       return HttpResponse.json(existing);
     }
@@ -125,7 +140,7 @@ export const handlers = [
       notes: body.notes,
     };
 
-    savedCards.unshift(newCard);
+    userCards.unshift(newCard);
     return HttpResponse.json(newCard, { status: 201 });
   }),
 
@@ -135,11 +150,11 @@ export const handlers = [
       return HttpResponse.json({ detail: 'Authentication required' }, { status: 401 });
     }
 
+    const userCards = getCardsForUser(currentUser.id);
     const id = params.id as string;
-    const index = savedCards.findIndex((c) => c.id === id);
+    const index = userCards.findIndex((c) => c.id === id);
     if (index !== -1) {
-      const removed = savedCards.splice(index, 1)[0];
-      savedSenseIds.delete(removed.sense_id);
+      userCards.splice(index, 1);
       return new HttpResponse(null, { status: 204 });
     }
 
@@ -160,10 +175,15 @@ export const handlers = [
     if (!body?.email || !body?.password) {
       return HttpResponse.json({ detail: 'Email and password required' }, { status: 400 });
     }
-    currentUser = {
-      id: `usr_${Date.now().toString(36)}`,
-      email: body.email,
-    };
+    let user = registeredUsers.get(body.email);
+    if (!user) {
+      user = {
+        id: `usr_${Date.now().toString(36)}`,
+        email: body.email,
+      };
+      registeredUsers.set(body.email, user);
+    }
+    currentUser = user;
     return HttpResponse.json(currentUser);
   }),
 
@@ -173,10 +193,15 @@ export const handlers = [
     if (!body?.email || !body?.password) {
       return HttpResponse.json({ detail: 'Email and password required' }, { status: 400 });
     }
-    currentUser = {
-      id: `usr_${Date.now().toString(36)}`,
-      email: body.email,
-    };
+    let user = registeredUsers.get(body.email);
+    if (!user) {
+      user = {
+        id: `usr_${Date.now().toString(36)}`,
+        email: body.email,
+      };
+      registeredUsers.set(body.email, user);
+    }
+    currentUser = user;
     return HttpResponse.json(currentUser, { status: 201 });
   }),
 
@@ -190,7 +215,8 @@ export const handlers = [
 // Helper to reset mocks in tests
 export function resetMockStore(): void {
   currentUser = initialUser();
-  savedCards.splice(0, savedCards.length, ...initialCards());
-  savedSenseIds.clear();
-  savedCards.forEach((c) => savedSenseIds.add(c.sense_id));
+  userCardsStore.clear();
+  userCardsStore.set('usr_mock_1', initialCards());
+  registeredUsers.clear();
+  registeredUsers.set('learner@example.com', { id: 'usr_mock_1', email: 'learner@example.com' });
 }
