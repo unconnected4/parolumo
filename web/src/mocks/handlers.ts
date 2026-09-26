@@ -29,10 +29,20 @@ const initialCards = (): Card[] => [
   },
 ];
 
+// Seeded account for mock mode: learner@example.com / password123
+const SEED_PASSWORD = 'password123';
+
+interface MockAccount {
+  user: User;
+  password: string;
+}
+
+const initialAccounts = (): Map<string, MockAccount> =>
+  new Map([['learner@example.com', { user: initialUser(), password: SEED_PASSWORD }]]);
+
 const userCardsStore = new Map<string, Card[]>();
-const registeredUsers = new Map<string, User>([
-  ['learner@example.com', { id: 'usr_mock_1', email: 'learner@example.com' }],
-]);
+const registeredUsers = initialAccounts();
+let nextUserNumber = 2;
 
 function getCardsForUser(userId: string): Card[] {
   if (!userCardsStore.has(userId)) {
@@ -175,15 +185,12 @@ export const handlers = [
     if (!body?.email || !body?.password) {
       return HttpResponse.json({ detail: 'Email and password required' }, { status: 400 });
     }
-    let user = registeredUsers.get(body.email);
-    if (!user) {
-      user = {
-        id: `usr_${Date.now().toString(36)}`,
-        email: body.email,
-      };
-      registeredUsers.set(body.email, user);
+    // Behave like a real backend: unknown email or wrong password is a 401, never an implicit sign-up.
+    const account = registeredUsers.get(body.email);
+    if (!account || account.password !== body.password) {
+      return HttpResponse.json({ detail: 'Invalid email or password' }, { status: 401 });
     }
-    currentUser = user;
+    currentUser = account.user;
     return HttpResponse.json(currentUser);
   }),
 
@@ -193,14 +200,11 @@ export const handlers = [
     if (!body?.email || !body?.password) {
       return HttpResponse.json({ detail: 'Email and password required' }, { status: 400 });
     }
-    let user = registeredUsers.get(body.email);
-    if (!user) {
-      user = {
-        id: `usr_${Date.now().toString(36)}`,
-        email: body.email,
-      };
-      registeredUsers.set(body.email, user);
+    if (registeredUsers.has(body.email)) {
+      return HttpResponse.json({ detail: 'A user with this email already exists' }, { status: 409 });
     }
+    const user: User = { id: `usr_mock_${nextUserNumber++}`, email: body.email };
+    registeredUsers.set(body.email, { user, password: body.password });
     currentUser = user;
     return HttpResponse.json(currentUser, { status: 201 });
   }),
@@ -218,5 +222,6 @@ export function resetMockStore(): void {
   userCardsStore.clear();
   userCardsStore.set('usr_mock_1', initialCards());
   registeredUsers.clear();
-  registeredUsers.set('learner@example.com', { id: 'usr_mock_1', email: 'learner@example.com' });
+  initialAccounts().forEach((account, email) => registeredUsers.set(email, account));
+  nextUserNumber = 2;
 }

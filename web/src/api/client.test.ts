@@ -47,8 +47,31 @@ describe('API client (interim Step 0)', () => {
     const loggedOutUser = await getMe();
     expect(loggedOutUser).toBeNull();
 
-    const loggedInUser = await login({ email: 'new@example.com', password: 'password123' });
-    expect(loggedInUser.email).toBe('new@example.com');
+    const loggedInUser = await login({ email: 'learner@example.com', password: 'password123' });
+    expect(loggedInUser.email).toBe('learner@example.com');
+  });
+
+  it('rejects login with an unknown email or a wrong password', async () => {
+    await logout();
+    await expect(login({ email: 'nobody@example.com', password: 'password123' })).rejects.toMatchObject({
+      status: 401,
+    });
+    await expect(login({ email: 'learner@example.com', password: 'wrong' })).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(await getMe()).toBeNull();
+  });
+
+  it('rejects registering an email that already exists', async () => {
+    await expect(register({ email: 'learner@example.com', password: 'other' })).rejects.toMatchObject({
+      status: 409,
+    });
+  });
+
+  it('gives each registered user a distinct id', async () => {
+    const a = await register({ email: 'a@example.com', password: 'secret123' });
+    const b = await register({ email: 'b@example.com', password: 'secret123' });
+    expect(a.id).not.toBe(b.id);
   });
 
   it('isolates saved cards and saved flag between different users', async () => {
@@ -73,7 +96,7 @@ describe('API client (interim Step 0)', () => {
     expect(user2Updated[0].lemma).toBe('bank');
 
     // Log back in as User 1
-    await login({ email: 'learner@example.com', password: 'pwd' });
+    await login({ email: 'learner@example.com', password: 'password123' });
     const user1After = await listCards();
     expect(user1After.length).toBe(1);
     expect(user1After[0].lemma).toBe('run');
