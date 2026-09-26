@@ -1,4 +1,4 @@
-# Paralumo — plan for steps 1–2 (backend + translator-dictionary), step 3 outline
+# Paralumo — plan for steps 0–2 (web UI + backend + translator-dictionary), step 3 outline
 
 ## Context
 `intent.md` sets out the build order: a shared multi-user backend with word/sense/spaced-repetition (SRS) storage, then an English→Russian translator-dictionary with a per-sense "+" button to save senses into the user's vocabulary, then a "Match the words" game that runs on real vocabulary. The web app comes first; Android later; iOS only if people want it.
@@ -13,14 +13,14 @@ Decisions (see also `../intent.md` → Cross-cutting decisions, and each project
 ## Step 0 — Web UI implementation (first, by Alex)
 - **Implement Web UI first, backend follows (by Alex):** "we are implementing web ui now. Based on them we will implement backend." Do not scaffold anything in `backend/` yet.
 - **Scaffold `web/`:** React + Vite + TypeScript SPA with Tailwind CSS.
-- **API module & Types (P16):** `web/src/api/` defines the TypeScript models (`Lexeme`, `Sense`, `Card`, etc.) and a hand-written fetch client (`lookup`, `saveCard`, `deleteCard`, `listCards`). Production code imports only from `src/api/`, never from `src/mocks/`. In Step 1, this module is replaced by the generated client (`npm run gen:api`).
-- **Mock layer in `web/` (P16, P17):** MSW handlers and fixtures are authored directly in `web/src/mocks/` (e.g. for "run", "bank", "light", plus not-found and error cases). MSW intercepts network requests at `/api/...`, and an in-memory store overlays `saved: bool` dynamically. `docs/api/examples/` is dropped to avoid duplication.
+- **API module & Types (P16, P20):** `web/src/api/` defines the TypeScript models (`Lexeme`, `Sense`, `Card`, `User`, etc.) and a hand-written fetch client (`lookup`, `saveCard`, `deleteCard`, `listCards`, `login`, `register`, `logout`, `getMe`). Production code imports only from `src/api/`, never from `src/mocks/`. In Step 1, this module is replaced by the generated client (`npm run gen:api`).
+- **Mock layer in `web/` (P16, P17, P20, P22):** MSW handlers and fixtures are authored directly in `web/src/mocks/` (e.g. for "run", "bank", "light", plus not-found and error cases). MSW intercepts network requests at `/api/...`, maintains in-memory state for saved cards and the signed-in user, and returns 401 when unauthenticated. Mock mode is triggered by `VITE_API_MOCKS=1` (`npm run dev:mock`) and tree-shaken out of production builds. `docs/api/examples/` is dropped to avoid duplication.
 - **Build Core UI Surfaces:**
   - Search view: search input, phonetic transcription, client-side Web Speech audio playback.
   - Senses grouped by Part of Speech (noun, verb, etc.).
   - Sense card showing Russian gloss, synonyms, English meanings, example sentences, and interactive `+` → `✓` toggle.
   - "My Words" view: list/deck of saved cards with local/mock state.
-  - Simple mock auth header/session indicator (P19).
+  - Simple login/register screens and session indicator in header driven by `src/api/` auth calls (P20).
 - **Backend implementation follows:** Once the Web UI is built and verified, the proven UI data structures dictate the backend schemas, endpoints, and OpenAPI contract.
 
 ## Repo layout
@@ -37,6 +37,7 @@ Start outside-in by building and validating the Web UI (`web/`) with its own moc
 
 ## Step 1 — Backend implementation & data model (based on Web UI)
 Scaffold `backend/` with `uv`, FastAPI, Pydantic schemas, and Postgres models matching the Web UI contract. Export `docs/api/openapi.json`, and transition `web/` to the generated client (`npm run gen:api`).
+- **Handover from Step 0 (P24):** The Step 0 types and client functions in `web/src/api/` are the input for the backend's Pydantic schemas and routes. Step 1 is done when the generated client replaces the interim module and `npm run typecheck` passes with pages, hooks and MSW handlers unchanged apart from imports.
 - `users`: id, email, password_hash, created_at. Auth uses `fastapi-users` supporting cookie transport (for web) and bearer JWT (for Android).
 - `lexemes`: id, lemma, lang='en', pos, transcription. Unique on (lemma, pos).
 - `senses`: id, lexeme_id, source, source_key (matches the public `sense_id` string from Step 0), translation_ru, synonyms_ru[], meanings_en[], examples jsonb [{en, ru}].

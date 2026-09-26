@@ -10,7 +10,7 @@ Scope: the browser client, and the fast prototyping surface for every feature be
 - Audio pronunciation: Web Speech API (`window.speechSynthesis`) is the primary audio source, with feature detection (`'speechSynthesis' in window` and voice check) to gracefully hide the button when unsupported
 - Tests: Vitest + Testing Library for components. Full-flow tests live in `../e2e`
 
-## Pages (steps 1–2)
+## Pages (steps 0–2)
 - Login / register
 - Search: results grouped by part of speech, one card per sense (Russian translation, synonyms, English meanings, examples), with a "+" button that turns into ✓ once saved
 - My words: the user's vocabulary list
@@ -21,8 +21,8 @@ Step 3 adds the Match game page.
 ## Decisions
 - The web app holds **no secrets** and talks only to `/api` on the same origin (the Vite proxy locally, and the same arrangement in production).
 - The API client is generated from `docs/api/openapi.json` (`npm run gen:api`) once the backend is scaffolded in Step 1. During the initial UI implementation (Step 0, by Alex), `web/` defines its TypeScript models and a hand-written client in `src/api/` that MSW intercepts at `/api/...`, keeping production code decoupled from `src/mocks/`.
-- **Outside-in UI implementation with MSW (by Alex):** "we are implementing web ui now. Based on them we will implement backend." Mock fixtures and MSW handlers are authored directly inside `web/src/mocks/` to build and validate the user experience without waiting for backend exports. The MSW handlers maintain an in-memory set of saved sense IDs to overlay `saved: true/false` on search responses dynamically and support mock `POST`/`DELETE /api/cards`. Auth is mocked with a simple local session state in Step 0.
-- **The MSW mock layer is a separate, permanent part of `web/` (by Alex):** it is not replaced by running against the backend's mocked functionality, because that "mixtures implementations that should be segregated", and because the "UI mock can be utilized in the future for UI only tests". It lives in its own folder (`src/mocks/`), is switched on only by the dev mock mode or test setup, and is never imported by production code. Pages, components and hooks don't know whether they talk to MSW or a real backend. The same handlers are reused later for UI-only tests (see [../docs/engineering.md](../docs/engineering.md#testing-tiers)).
+- **Outside-in UI implementation with MSW (by Alex):** "we are implementing web ui now. Based on them we will implement backend." Mock fixtures and MSW handlers are authored directly inside `web/src/mocks/` to build and validate the user experience without waiting for backend exports. The MSW handlers maintain an in-memory set of saved sense IDs to overlay `saved: true/false` on search responses dynamically and support mock `POST`/`DELETE /api/cards`. Auth endpoints (`/api/auth/...`) are called through `src/api/` and mocked by MSW with in-memory user sessions, so production code contains no mock logic (by Alex).
+- **The MSW mock layer is a separate, permanent part of `web/` (by Alex):** it is not replaced by running against the backend's mocked functionality, because that "mixtures implementations that should be segregated", and because the "UI mock can be utilized in the future for UI only tests". It lives in its own folder (`src/mocks/`), is switched on only by `VITE_API_MOCKS=1` (via `npm run dev:mock`), and is never imported by production code. `main.tsx` dynamically imports `./mocks/browser` only when enabled, tree-shaking MSW out of production builds and excluding `mockServiceWorker.js` from production distributions. Pages, components and hooks don't know whether they talk to MSW or a real backend. The same handlers are reused later for UI-only tests (see [../docs/engineering.md](../docs/engineering.md#testing-tiers)).
 
 ## Open questions
 - Hosting: static hosting with `/api` routed to the backend, or served by the backend's host. TBD with backend hosting.

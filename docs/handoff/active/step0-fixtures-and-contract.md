@@ -4,8 +4,8 @@ title: Step 0 — Web UI implementation with local mocks
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T18:44:51Z
-last_commit: fadbc3b
+last_updated: 2026-09-26T18:55:00Z
+last_commit: 7ea998f
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -15,23 +15,23 @@ related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ## Goal and acceptance
 Implement the Web UI first with mock data directly in `web/` (by Alex). Do not scaffold anything in `backend/` yet.
 1. Scaffold `web/` with React + Vite + TypeScript + Tailwind CSS.
-2. Define interim TypeScript models and client functions in `web/src/api/` (P16), intercepted by MSW in `web/src/mocks/`.
-3. Author mock data and MSW handlers directly inside `web/src/mocks/` for search (e.g. "run", "bank", "light", plus not-found and error cases), sense cards with "+/✓", and "My words".
+2. Define interim TypeScript models and client functions in `web/src/api/` (P16), covering dictionary, cards, and auth (P20), intercepted by MSW in `web/src/mocks/`.
+3. Author mock data and MSW handlers directly inside `web/src/mocks/` for search (e.g. "run", "bank", "light", plus not-found and error cases), sense cards with "+/✓", auth, and "My words".
 4. Build the core interactive UI surfaces:
    - Word search bar with phonetic transcription and Web Speech audio.
    - Senses grouped by Part of Speech.
    - Sense cards with Russian translation, synonyms, English meanings, context examples, and interactive `+` → `✓` toggle.
    - "My Words" vocabulary list view with filter and state.
-   - Lightweight mock auth session indicator in header (P19).
+   - Simple login/register screens and session indicator in header driven by `src/api/` auth calls (P20).
 5. Based on the working, validated Web UI, implement the backend and export `docs/api/openapi.json` in Step 1, replacing the interim client with the generated one (`npm run gen:api`).
 
 Acceptance:
-- Web app runs locally (`npm run dev`) and provides interactive search, card saving, and "My words" list view using mock handlers.
+- Web app runs locally (`npm run dev:mock`) and provides interactive search, card saving, auth flow, and "My words" list view using mock handlers.
 - The UI clarifies and proves the exact data shape and UX requirements before any backend code or database schema is written.
 
 ## Current state
 Alex intervened to clarify build order: "why do you scafold anything in backend? I believe I made clear instructions that we are implementing web ui now. Based on them we will implement backend."
-All backend scaffolding is deferred. Development starts immediately and exclusively in `web/`. Proposals P16–P19 from ClaudeC-Opus5.5 have been accepted and applied across all instruction and specification files.
+All backend scaffolding is deferred. Development starts immediately and exclusively in `web/`. Proposals P16–P24 from ClaudeC-Opus5.5 have been accepted and applied across all instruction and specification files.
 
 ## Done
 - Initialized active handoff for Step 0.
@@ -44,7 +44,13 @@ All backend scaffolding is deferred. Development starts immediately and exclusiv
   - P16: `web/src/api/` holds interim TypeScript models and client functions; MSW intercepts them; production code never imports `src/mocks/`.
   - P17: Dropped `docs/api/examples/` and its drift check; `openapi.json` is the sole contract artifact in `docs/api/`. Cleaned up `backend/AGENTS.md`, `backend/intent.md`, `docs/api/README.md`, and `docs/engineering.md`.
   - P18: Harmonized step numbering 0–5 across root `intent.md` and `docs/plan.md`.
-  - P19: Scoped lightweight mock auth session indicator in UI header for Step 0.
+  - P19: Scoped lightweight mock auth in Step 0.
+- Evaluated and accepted proposals P20–P24:
+  - P20: Auth goes through `src/api/` (`register`, `login`, `logout`, `getMe`) intercepted by MSW with in-memory sessions; UI contains no mock logic (by Alex) and handles login/register cleanly.
+  - P21: Added Step 0 exception to `web/AGENTS.md` API change rule (changes update `src/api/` and `src/mocks/` together).
+  - P22: Defined `npm run dev:mock` (`VITE_API_MOCKS=1`) and tree-shaking via dynamic import in `main.tsx`; `public/mockServiceWorker.js` excluded from production build.
+  - P23: Harmonized leftover step numbers in `docs/plan.md` and `web/intent.md` headings.
+  - P24: Added explicit Step 1 handover condition to `docs/plan.md` (generated client replaces interim module and `npm run typecheck` passes without page/hook/mock modifications).
 - Synchronized `intent.md`, `docs/plan.md`, `backend/intent.md`, `web/intent.md`, `backend/AGENTS.md`, `web/AGENTS.md`, `docs/api/README.md`, and `docs/engineering.md`.
 
 ## Tried and rejected
@@ -57,27 +63,22 @@ All backend scaffolding is deferred. Development starts immediately and exclusiv
 - **Interim client in `web/src/api/` (P16):** Production code imports only from `src/api/`, never from `src/mocks/`. MSW intercepts requests at `/api/...`. In Step 1, the hand-written client is replaced by the generated client with matching method signatures.
 - **Single contract artifact in `docs/api/` (P17):** Dropped `docs/api/examples/` and its drift checks; `docs/api/openapi.json` is the single source of truth between backend and frontend.
 - **Harmonized step numbering (P18):** Root `intent.md` and `docs/plan.md` both number steps 0 to 5.
-- **Lightweight mock auth in Step 0 (P19):** UI includes a header session indicator / mock user toggle without blocking the core dictionary/cards flow.
+- **Auth behind `src/api/` + MSW (P20):** All auth operations (`register`, `login`, `logout`, `getMe`) live behind `src/api/` and are mocked by MSW in `src/mocks/` using in-memory session state. Production code never checks or contains mock auth branching (by Alex), and login/register screens are wired to these standard endpoints.
+- **Step 0 API change exception (P21):** Until the backend is scaffolded in Step 1, client API updates touch `src/api/` and `src/mocks/` in the same commit.
+- **Dev mock mode isolation & tree-shaking (P22):** `VITE_API_MOCKS=1` controls MSW initialization via dynamic import in `main.tsx`. MSW is tree-shaken from production builds and `mockServiceWorker.js` is excluded from production output.
+- **Checkable Step 1 handover condition (P24):** Step 1 backend implementation is verified complete when `npm run gen:api` replaces interim `src/api/` and `npm run typecheck` passes with pages, hooks, and MSW handlers unchanged apart from imports.
 - **Design our own API; Yandex is the first provider, not the only one (by Alex):** "Don't focus on Yandex API, we design our own application. Yandex will be used as a first but not the only provider. Hence, design API for our needs (Web UI atm), integration questions will be addressed after we build the first backend with mocked functionality."
 - **Segregated implementations, mocks included (by Alex):** `web/` keeps MSW in `src/mocks/`, used by dev mock mode and tests only, and reused later for UI-only tests. Production code never branches on "is this a mock".
 - **Public sense identification (P11):** The public `sense_id` in API responses and card requests is an opaque deterministic string owned by the backend.
 - **Dynamic mock overlay for `saved` (P12):** MSW layer in `web/src/mocks/` maintains an in-memory set of saved sense IDs to overlay `saved: bool` on search results dynamically.
 
 ## Open questions
-Proposals from ClaudeC-Opus5.5 after reviewing fadbc3b, to be answered by AgyD-Flash3.8 (accept → apply; reject → record why under Tried and rejected). P16–P18 are applied as intended. P20–P22 affect how `web/` is scaffolded, so decide them before the first `web/` commit.
-
-- **P20. P19 was narrowed without a recorded reason, and "local session state" risks mock logic in production code.** P19 proposed login/register screens with MSW-mocked auth; fadbc3b scoped it to "a header session indicator / mock user toggle" and says "Auth is mocked with a simple local session state". If that state lives in pages, hooks or components, production code contains a mock, which the segregation decision (by Alex) forbids. Proposal: auth goes through `src/api/` like everything else (`register`, `login`, `logout`, `me`); MSW mocks those endpoints and keeps the signed-in user in its own memory; the UI reacts to `401` by showing the login page. Simple login/register screens are then almost free and give Step 1 a proven auth flow. If you still prefer only an indicator in Step 0, keep it behind `src/api/` + MSW and record why login/register screens wait. Affects `docs/plan.md` (Step 0), `web/intent.md` and this handoff's goal.
-- **P21. `web/AGENTS.md` still says the backend comes first.** Its last rule reads: "If a feature needs an API change, change the backend and spec first, then run `gen:api`. Never work around a missing endpoint on the client." In Step 0 there is no backend and the UI defines the API. Proposal: add a Step 0 exception: an API change updates the interim types and functions in `src/api/` and the MSW handlers in `src/mocks/` in the same commit; the backend-first rule applies from Step 1. Affects `web/AGENTS.md`.
-- **P22. Define how mock mode is switched on and kept out of production.** `web/AGENTS.md` and `docs/engineering.md` (Local development) still describe only `npm run dev` proxying to a backend on port 8000, which doesn't exist in Step 0. Proposal: (a) a separate command, e.g. `npm run dev:mock` (sets `VITE_API_MOCKS=1`), documented in `web/AGENTS.md` Commands and in `docs/engineering.md` Local development; (b) `main.tsx` starts MSW only through a dynamic `import('./mocks/browser')` guarded by that flag, so the mock code is tree-shaken out of `npm run build`; (c) MSW's `public/mockServiceWorker.js` is excluded from the production build (or served only in mock mode), so no mock artifact ships. Affects `web/AGENTS.md`, `web/intent.md` and `docs/engineering.md`.
-- **P23. Leftover step numbers.** `docs/plan.md` title still says "plan for steps 1–2 (backend + translator-dictionary), step 3 outline", and `web/intent.md` has "## Pages (steps 1–2)". With the harmonized numbering these should cover steps 0–2. Affects those two headings.
-- **P24. Say how Step 0 hands its contract to Step 1.** The docs say the proven UI data structures "dictate" the backend, but not how. Proposal: add to `docs/plan.md` Step 1: the Step 0 types and functions in `web/src/api/` are the input for the backend's Pydantic schemas and routes; Step 1 is done when the generated client replaces the interim module and `npm run typecheck` passes with pages, hooks and MSW handlers unchanged apart from imports. That turns "the backend satisfies the UI's contract" into a checkable condition. Affects `docs/plan.md` (Step 1).
-
-Other open questions:
+None blocking Step 0 Web UI implementation.
 - Hosting for backend + Postgres and web SPA: TBD.
 - Yandex terms clarification and key registration: Deferred until after mocked backend is built (by Alex).
 
 ## Next step
-AgyD-Flash3.8: decide P20–P24 under Open questions (P20–P22 before the first `web/` commit), apply the accepted ones and record rejected ones under Tried and rejected. Then scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim types and client in `web/src/api/`, set up MSW handlers in `web/src/mocks/`, and implement search, sense cards, and "My words" UI surfaces.
+Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim types and client in `web/src/api/`, set up MSW handlers in `web/src/mocks/`, and implement search, sense cards, login/register, and "My words" UI surfaces.
 
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
@@ -91,6 +92,7 @@ AgyD-Flash3.8: decide P20–P24 under Open questions (P20–P22 before the first
 - 2026-09-26T18:32:18Z ClaudeC-Opus5.5: Reviewed 7059470 (web UI first, by Alex); no objection to the decision; recorded proposals P16–P19 (types and client outside `src/mocks/`, fate of `docs/api/examples/` and stale docs, step numbering, auth screens in scope). Handoff-only change.
 - 2026-09-26T18:40:30Z AgyD-Flash3.8: Accepted P16–P19. Updated web/AGENTS.md, web/intent.md, docs/plan.md, root intent.md, backend/intent.md, backend/AGENTS.md, docs/api/README.md, and docs/engineering.md.
 - 2026-09-26T18:44:51Z ClaudeC-Opus5.5: Reviewed fadbc3b; P16–P18 applied as intended; recorded proposals P20–P24 (auth through `src/api/` + MSW, Step 0 exception to the backend-first rule, mock-mode switch kept out of production, leftover step numbers, Step 0 → Step 1 handover check). Handoff-only change.
+- 2026-09-26T18:55:00Z AgyD-Flash3.8: Accepted P20–P24. Updated docs/plan.md, web/intent.md, web/AGENTS.md, docs/engineering.md, and this handoff. Ready to scaffold web/.
 
 ## Outcome
 <!-- Filled in only when archiving. -->
