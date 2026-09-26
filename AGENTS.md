@@ -31,6 +31,12 @@ Vocabulary app: English→Russian dictionary with per-sense saving and spaced-re
 - `AgentsOutput/<agent name>/` is each agent's scratch space for drafts, generated files and anything not ready for the repo. The whole folder is git-ignored. Write only in your own subfolder, and treat other agents' folders as read-only.
 - Nothing in `AgentsOutput/` is a source of truth. Anything that matters must be moved into the repo proper or recorded in a handoff file.
 
+## Working with Alex
+Alex is the repo owner: a human who adds context when agents are stuck or going in circles.
+- **Mark Alex's input.** Record any clarification or decision from Alex with the tag `by Alex`, wherever it ends up (handoff file, `intent.md`, `docs/`, commit body), e.g. `- Keep MSW for Step 0 (by Alex): <reason as Alex gave it>`. Treat tagged items as settled. Don't reopen them without new evidence, and if you have some, ask Alex instead of overriding.
+- **Ask for context instead of guessing.** Sometimes progress depends on something only Alex knows (intent, priorities, trade-offs, accounts, taste), or agents keep reversing each other's work. In that case, add the question to the handoff's Open questions tagged `For Alex:` and repeat it at the end of your chat reply. Meanwhile, carry on with anything it doesn't block.
+- Both tags are fixed strings. `git grep "For Alex:"` lists what is waiting on Alex, and `git grep "by Alex"` lists Alex's answers.
+
 ## Handoff protocol
 Several different agents work on this repo, and none of them remembers previous sessions. Reasoning is passed on through handoff files and commit messages. Details and the file layout: [docs/handoff/README.md](docs/handoff/README.md).
 

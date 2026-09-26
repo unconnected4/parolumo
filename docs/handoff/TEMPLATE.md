@@ -26,9 +26,13 @@ A few sentences: where things stand right now. This is what the next agent reads
 
 ## Decisions made during this task
 - <decision>: <reason>, <alternatives considered>
+- <decision> (by Alex): <reason as Alex gave it>
 
 ## Open questions
-- <question>, <who should answer: user / next agent>
+<!-- Tags "For Alex:" and "by Alex" are defined in AGENTS.md "Working with Alex". Keep answered questions; copy lasting answers to Decisions. -->
+- <question>, <who should answer: next agent>
+- For Alex: <question>, <why only Alex can answer, what it blocks>
+- ~~For Alex: <question>~~ → <answer> (by Alex, <UTC date>)
 
 ## Next step
 The single most useful thing for the next session to do.
