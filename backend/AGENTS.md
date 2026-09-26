@@ -11,6 +11,7 @@ FastAPI JSON API. Intent and decisions: [intent.md](intent.md). Shared conventio
 - Migrate: `uv run alembic upgrade head`
 - New migration: `uv run alembic revision --autogenerate -m "<what changed>"`, then review the generated file
 - Export API spec: `uv run python -m app.export_openapi > ../docs/api/openapi.json`
+- Export API examples: `uv run python -m app.export_examples`
 
 ## Layout
 ```
@@ -21,17 +22,17 @@ app/
   services/      business logic (cards, srs, lookup)
   models/        SQLAlchemy models
   schemas/       Pydantic request/response models
-  providers/     DictionaryProvider + yandex.py + fake.py
+  providers/     DictionaryProvider + fake.py + fake_data/ (+ yandex.py later)
 alembic/
 tests/
   unit/
   integration/   marked @pytest.mark.integration, real Postgres
-  fixtures/      recorded Yandex JSON (also used by the fake provider)
+  fixtures/      recorded provider JSON for integration tests
 ```
 
 ## Rules
 - Every model change ships with an Alembic migration in the same commit. Migrations must be backward-compatible with the previous release.
-- Any change to routes or schemas means re-exporting `docs/api/openapi.json` in the same commit.
+- Any change to routes or schemas means re-exporting `docs/api/openapi.json` and `docs/api/examples/` in the same commit.
 - New config goes into `Settings` and `.env.example` together. Never add secrets to code or fixtures.
 - Tests use `DICTIONARY_PROVIDER=fake` and never call Yandex.
 - Every endpoint that touches user data has a per-user isolation test.

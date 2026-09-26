@@ -28,15 +28,15 @@ Shared across `backend/`, `web/` and `e2e/`. Project-specific commands live in e
 | Web UI-only (planned) | `web/` | the MSW mock layer in `web/src/mocks/`, no backend | web CI, once added. Uses the same handlers as the dev mock mode (by Alex) |
 | Backend integration | `backend/tests/integration` (`pytest -m integration`) | real Postgres (`TEST_DATABASE_URL`), migrations applied, fake dictionary provider, app called via `httpx.AsyncClient` | backend CI |
 | Migrations | `backend/tests/integration/test_migrations.py` | Postgres | backend CI; runs upgrade head → downgrade -1 → upgrade head |
-| Contract | CI step | — | backend CI fails if `docs/api/openapi.json` differs from the spec the backend generates; web CI fails if the generated client differs from what's committed |
+| Contract | CI step | — | backend CI fails if `docs/api/openapi.json` or `docs/api/examples/` differs from what the backend exports; web CI fails if the generated client differs from what's committed |
 | End-to-end | `e2e/` (Playwright) | built web + running API + Postgres, fake dictionary provider | e2e CI on PRs touching any project |
 
 The first e2e test covers the loop from the plan: register, search "run", add two senses, and see them in "My words".
 
 ## API contract
-- FastAPI generates the spec. `backend` exports it to `docs/api/openapi.json`, which is committed.
-- `web` generates its typed client from that file (`npm run gen:api` → `web/src/api/`), and the generated code is committed too.
-- An API change touches the backend code, `openapi.json` and the web client in the same commit. CI enforces this.
+- FastAPI generates the spec. `backend` exports it to `docs/api/openapi.json`, and exports validated response examples to `docs/api/examples/`, which are committed.
+- `web` generates its typed client from that file (`npm run gen:api` → `web/src/api/`), and consumes `docs/api/examples/` in its MSW mock layer (`web/src/mocks/`).
+- An API change touches the backend code/schemas, `openapi.json`, `docs/api/examples/` and the web client in the same commit. CI enforces this.
 
 ## Delivery
 - **Trunk-based:** short-lived branches, PRs into `main`, and `main` is always deployable.
