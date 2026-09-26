@@ -1,0 +1,21 @@
+# Local infrastructure only. The API and web app run natively (see docs/engineering.md).
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: paralumo
+      POSTGRES_PASSWORD: paralumo   # local-only credentials
+      POSTGRES_DB: paralumo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paralumo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

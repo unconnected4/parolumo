@@ -1,0 +1,39 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / web
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
+# Editors / OS
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Agent scratch space (one subfolder per agent) and app download folder
+AgentsOutput/
+Claude outputs/
