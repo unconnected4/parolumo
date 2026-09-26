@@ -51,7 +51,8 @@ Use a handoff file for any task that spans more than one commit or session. A se
 Record distilled reasoning (decisions, rejected options, evidence), not raw transcripts or chain-of-thought. Never paste secrets.
 
 ## Commit messages
-- Subject line: what changed. Body: **why**, including alternatives considered when it isn't obvious. Bodies can be as long as needed.
+- Subject line: `[<agent name>] <what changed>`, e.g. `[ClaudeD-Fable5.1] Add Yandex response mapping`. The prefix lets `git log --oneline` show who made each commit, and who committed last.
+- Body: **why**, including alternatives considered when it isn't obvious. Bodies can be as long as needed.
 - End every commit with trailers:
   ```
   Task: <task-slug>            # omit for standalone commits
