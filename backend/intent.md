@@ -15,8 +15,9 @@ Scope: the multi-user JSON API behind every client. It covers auth, dictionary l
 - **Plain JSON API only.** No server-rendered HTML, so Android can reuse it unchanged. The spec is exported to `docs/api/openapi.json`.
 - **Layering:** `api/` (thin routes) → `services/` (logic) → `models/` + `providers/`. Routes never talk to providers directly.
 - **Auth transport:** `fastapi-users` supports dual transports simultaneously. Use `CookieTransport` (httpOnly, SameSite=lax) for the Web SPA (safe behind Vite proxy, no JS token storage), and keep `BearerTransport` enabled for future mobile/Android clients.
-- **Card retention:** `user_cards` uses soft deletion (`deleted_at TIMESTAMP NULL`) so user card removal never deletes `review_logs`, preserving SRS training history.
+- **Card retention:** `user_cards` uses soft deletion (`deleted_at TIMESTAMP NULL`). Re-saving a deleted card restores it (`deleted_at = NULL`), retaining its FSRS state and `review_logs`. A single unique constraint on `(user_id, sense_id)` applies. Active card filtering (`deleted_at IS NULL`) is centralized in `services/cards.py`.
+- **Lookup cache:** `lookup_cache` is a deduplicating cache with TTL to avoid duplicate provider lookups. Rate limiting / daily quota throttling is a separate mechanism if needed.
 
 ## Open questions
 - Hosting and deploy target: TBD (see [../docs/engineering.md](../docs/engineering.md#delivery)).
-- Whether Yandex terms allow caching lookups (`lookup_cache`) or only rate limiting.
+- Whether Yandex terms allow caching lookups (`lookup_cache`) and what retention period is permitted.

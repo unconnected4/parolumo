@@ -3,19 +3,16 @@
 Product-level intent and cross-cutting decisions. Project-specific intent lives in [backend/intent.md](backend/intent.md) and [web/intent.md](web/intent.md). The detailed plan is in [docs/plan.md](docs/plan.md), and engineering conventions are in [docs/engineering.md](docs/engineering.md).
 
 ## Architecture / build order
-1. Shared backend: multi-user, word/sense storage, SRS data model
-2. Translator-dictionary functionality is the FIRST feature: search a word,
-   call a third-party translation API, display senses/translations/example
-   sentences, and give each sense a "+" button to save it into the user's vocabulary.
-   This is the foundation everything else (including the game) reads from.
-3. "Match the words" game, built against real per-user vocabulary data
-   from step 2, not static/dummy pairs
-4. Web UI used throughout as the fast prototyping surface
+1. Outside-in UI prototype: prototype the web SPA (search, sense cards with "+/✓", "My words") against real recorded Yandex fixtures and draft OpenAPI spec to validate UX and lock down the data contract.
+2. Shared backend: multi-user, word/sense storage, SRS data model, FastAPI implementation of the validated contract.
+3. Translator-dictionary integration: connect web to live/fake backend provider.
+4. "Match the words" game, built against real per-user vocabulary data from step 3.
 5. Android after web is stable (a third project alongside `backend/` and `web/`)
 6. iOS only if there's demonstrated interest/traction
 
 ## Cross-cutting decisions
 - **English → Russian only** for v1. A single pair lets us check the whole search → save → practice loop quickly.
+- **Outside-in prototyping:** Start with the Web UI against recorded Yandex fixtures and a draft OpenAPI contract before freezing the backend schema and persistence layer.
 - **Yandex Dictionary API** for word data. It returns sense-level translations with examples (plain translation APIs don't), and it is strong for pairs involving Russian. It sits behind a `DictionaryProvider` interface so it can be swapped out.
 - **Backend and clients meet only at a JSON API** described by a committed OpenAPI spec (`docs/api/openapi.json`). The web app now, and the Android app later, use it unchanged.
 - **FSRS scheduling, with every review logged from day one.** Keeping the logs means we can change the algorithm later without losing history.
