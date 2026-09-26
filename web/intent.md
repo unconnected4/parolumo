@@ -21,7 +21,7 @@ Step 3 adds the Match game page.
 ## Decisions
 - The web app holds **no secrets** and talks only to `/api` on the same origin (the Vite proxy locally, and the same arrangement in production).
 - The API client is always generated. Hand-written fetch calls to the backend are not allowed.
-- **Outside-in UI prototyping with MSW:** UI prototyping uses recorded Yandex lookup responses mapped to the shared schema, served via MSW (Mock Service Worker) at the network layer and called via the generated client (typed from `docs/api/openapi.json`). This ensures the UI exercises the exact production data shape from day one.
+- **Outside-in UI prototyping with MSW:** UI prototyping uses mapped API response examples from `docs/api/examples/` (generated during Step 0), served via MSW (Mock Service Worker) at the network layer and called via the generated client (typed from `docs/api/openapi.json`). This ensures the UI exercises the exact production data shape from day one while keeping `web/` completely decoupled from backend internals.
 
 ## Open questions
 - Hosting: static hosting with `/api` routed to the backend, or served by the backend's host. TBD with backend hosting.

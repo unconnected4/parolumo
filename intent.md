@@ -3,7 +3,7 @@
 Product-level intent and cross-cutting decisions. Project-specific intent lives in [backend/intent.md](backend/intent.md) and [web/intent.md](web/intent.md). The detailed plan is in [docs/plan.md](docs/plan.md), and engineering conventions are in [docs/engineering.md](docs/engineering.md).
 
 ## Architecture / build order
-1. Outside-in UI prototype: prototype the web SPA (search, sense cards with "+/✓", "My words") against real recorded Yandex fixtures and draft OpenAPI spec to validate UX and lock down the data contract.
+1. Step 0 contract & outside-in UI prototype: thin backend slice (schemas, mapping, fake provider) to export `docs/api/openapi.json` and API response examples, followed by web SPA prototype (search, sense cards with "+/✓", "My words") against MSW to validate UX and lock down the data contract.
 2. Shared backend: multi-user, word/sense storage, SRS data model, FastAPI implementation of the validated contract.
 3. Translator-dictionary integration: connect web to live/fake backend provider.
 4. "Match the words" game, built against real per-user vocabulary data from step 3.
@@ -22,5 +22,5 @@ Product-level intent and cross-cutting decisions. Project-specific intent lives 
 Stack choices per project: [backend](backend/intent.md) (FastAPI + SQLAlchemy + Alembic + Postgres) and [web](web/intent.md) (React + Vite + TypeScript).
 
 ## Open questions
-- Can we still get a Yandex Dictionary API key, and what do its terms say about request limits, required credit lines, and storing results? Check this before building step 2.
+- Yandex Dictionary API key availability: verify key acquisition and terms (request limits, attribution, caching). If a key cannot be obtained quickly, use documented sample responses for initial Step 0 fixtures; if no key is obtainable at all, escalate `DictionaryProvider` swap (e.g. Wiktionary) before Step 1.
 - Hosting for the backend + Postgres and for the web app is **TBD**. Deploy and production-secrets sections are placeholders until this is decided.

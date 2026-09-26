@@ -10,29 +10,30 @@ Decisions (see also `../intent.md` → Cross-cutting decisions, and each project
 - **Frontend:** React + Vite + TypeScript SPA; Android gets a separate native app later
 - The backend is a plain JSON API so the future Android app can use it unchanged
 
-## Step 0 — confirm Yandex, record fixtures, draft contract
-- Confirm a Yandex Dictionary API key can still be obtained (new key registration has been restricted at times) and check its current terms: daily request limit, required "Powered by Yandex.Dictionary" credit, and caching rules.
-- Record real Yandex `lookup` JSON responses (for words like "run", "bank", "light") to serve as shared fixtures for both the backend `fake` provider and the web MSW mock layer.
-- Define the draft `docs/api/openapi.json` contract for the lookup and cards endpoints so the web client can be generated from day one.
-- Hide the provider behind a `DictionaryProvider` interface so we can switch to another source (e.g. Wiktionary data) if Yandex falls through.
+## Step 0 — confirm Yandex, fixtures, schemas & contract export
+- **Key & Terms:** Confirm a Yandex Dictionary API key can still be obtained (new registration has been restricted at times) and check current terms (daily request limits, attribution requirement, caching rules). If a key cannot be obtained quickly, use documented sample responses from Yandex API docs for initial fixtures; if no key can be obtained at all, escalate `DictionaryProvider` swap (e.g. Wiktionary) before Step 1.
+- **Raw Fixtures:** Save recorded or documented raw Yandex responses in `backend/tests/fixtures/yandex/<word>.json` (for words like "run", "bank", "light").
+- **Thin Backend Slice:** Build schemas (`Lexeme`, `Sense`), Yandex mapping logic (`providers/yandex.py`), `fake` provider with unit tests against raw fixtures, and stub FastAPI routes.
+- **Contract & API Examples Export:** Export `docs/api/openapi.json` directly from the FastAPI app (`python -m app.export_openapi`), and export mapped API response fixtures to `docs/api/examples/<endpoint>/<case>.json`.
+- **Interface Boundary:** `web/` consumes mock fixtures only from `docs/api/examples/` via MSW, completely decoupled from `backend/tests/`.
 
 ## Repo layout
 Monorepo with independently delivered projects. The full map is in the root [AGENTS.md](../AGENTS.md).
 ```
-backend/             FastAPI app (pyproject + uv), alembic/, app/{api,services,models,schemas,providers}, tests/
+backend/             FastAPI app (pyproject + uv), alembic/, app/{api,services,models,schemas,providers}, tests/fixtures/yandex/
 web/                 Vite + React + TS
 e2e/                 Playwright tests across web + backend
-docs/                shared docs; docs/api/openapi.json is the API contract
+docs/                shared docs; docs/api/openapi.json is the API contract; docs/api/examples/ for MSW fixtures
 docker-compose.yml   Postgres for local dev
 ```
 ## Build strategy: UI-first prototyping
-Start outside-in from the UI (`web/`). Prototyping search results, sense cards with "+/✓" save interaction, "My words", and the Match game against real recorded Yandex fixtures (served via MSW and called through the generated API client) validates the UX and proves the exact data shape needed before freezing the database schema and backend endpoints.
+Start outside-in from the UI (`web/`). Prototyping search results, sense cards with "+/✓" save interaction, "My words", and the Match game against real mapped API fixtures (served via MSW from `docs/api/examples/` and called through the generated API client) validates the UX and proves the exact data shape needed before freezing the database schema and backend persistence layer.
 
 ## Step 1 — Data model (Postgres)
 - `users`: id, email, password_hash, created_at. Auth uses `fastapi-users` supporting cookie transport (for web) and bearer JWT (for Android).
 - `lexemes`: id, lemma, lang='en', pos, transcription. Unique on (lemma, pos).
 - `senses`: id, lexeme_id, source='yandex', source_key, translation_ru, synonyms_ru[], meanings_en[], examples jsonb [{en, ru}]. Yandex has no sense IDs, so `source_key` is a stable hash of lemma+pos+main translation.
-- `user_cards`: id, user_id, sense_id, **a copy of the sense data**, optional `notes` (text) and `custom_example` (text), `created_at`, `deleted_at` (soft delete to preserve review logs), plus SRS state (due_at, stability/interval, difficulty/ease, reps, lapses, state). Unique on `(user_id, sense_id)`. Re-saving a deleted card restores it (`deleted_at = NULL`) and retains its FSRS state and review logs. Active card queries filter `deleted_at IS NULL` centrally in `services/cards.py`.
+- `user_cards`: id, user_id, sense_id, **a copy of the sense data**, optional `notes` (text) and `custom_example` (text), `created_at`, `deleted_at` (soft delete to preserve review logs), plus SRS state (due_at, stability/interval, difficulty/ease, reps, lapses, state). Unique on `(user_id, sense_id)`. Re-saving a deleted card restores it (`deleted_at = NULL`), keeping its existing copied sense data, notes, custom examples, and FSRS state intact. Active card queries filter `deleted_at IS NULL` centrally in `services/cards.py`.
 - `review_logs`: card_id, reviewed_at, rating (1–4), source ('srs' | 'match_game'), previous and new state. Preserved even if a card is deleted so the algorithm can change or train without losing history.
 - `lookup_cache`: query and response json with a timestamp / TTL, used as a deduplicating cache. Quota throttling/rate limiting is handled as a separate mechanism if needed.
 - SRS algorithm: start with FSRS (the `fsrs` Python package), wrapped in `services/srs.py`.
