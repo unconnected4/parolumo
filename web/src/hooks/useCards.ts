@@ -1,0 +1,41 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteCard, listCards, saveCard, type Card } from '../api';
+
+export function useCards() {
+  const queryClient = useQueryClient();
+
+  const cardsQuery = useQuery<Card[], Error>({
+    queryKey: ['cards'],
+    queryFn: listCards,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (senseId: string) => saveCard(senseId),
+    onSuccess: () => {
+      // Invalidate both cards list and dictionary results so '+' turns into '✓' immediately
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['dictionary'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (cardId: string) => deleteCard(cardId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['dictionary'] });
+    },
+  });
+
+  return {
+    cards: cardsQuery.data ?? [],
+    isLoading: cardsQuery.isLoading,
+    isError: cardsQuery.isError,
+    error: cardsQuery.error,
+    saveCard: saveMutation.mutate,
+    isSaving: saveMutation.isPending,
+    savingSenseId: saveMutation.variables,
+    deleteCard: deleteMutation.mutate,
+    isDeleting: deleteMutation.isPending,
+    deletingCardId: deleteMutation.variables,
+  };
+}

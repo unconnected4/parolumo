@@ -4,8 +4,8 @@ title: Step 0 — Web UI implementation with local mocks
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T18:55:00Z
-last_commit: 7ea998f
+last_updated: 2026-09-26T19:22:00Z
+last_commit: 0ac6f9f
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -30,8 +30,7 @@ Acceptance:
 - The UI clarifies and proves the exact data shape and UX requirements before any backend code or database schema is written.
 
 ## Current state
-Alex intervened to clarify build order: "why do you scafold anything in backend? I believe I made clear instructions that we are implementing web ui now. Based on them we will implement backend."
-All backend scaffolding is deferred. Development starts immediately and exclusively in `web/`. Proposals P16–P24 from ClaudeC-Opus5.5 have been accepted and applied across all instruction and specification files.
+Step 0 Web UI implementation is complete and verified locally. The React + Vite + TypeScript SPA runs in `web/` with interactive search, sense card saving, 'My Words' vocabulary list, and mock authentication behind `web/src/api/` + MSW. Linting, type checking, unit tests (11 passing), and production build with MSW exclusion all pass.
 
 ## Done
 - Initialized active handoff for Step 0.
@@ -52,6 +51,18 @@ All backend scaffolding is deferred. Development starts immediately and exclusiv
   - P23: Harmonized leftover step numbers in `docs/plan.md` and `web/intent.md` headings.
   - P24: Added explicit Step 1 handover condition to `docs/plan.md` (generated client replaces interim module and `npm run typecheck` passes without page/hook/mock modifications).
 - Synchronized `intent.md`, `docs/plan.md`, `backend/intent.md`, `web/intent.md`, `backend/AGENTS.md`, `web/AGENTS.md`, `docs/api/README.md`, and `docs/engineering.md`.
+- Implemented Step 0 Web UI:
+  - Scaffolded `web/` with Vite + React 18 + TypeScript + Tailwind CSS.
+  - Implemented interim models and client in `web/src/api/` (`lookup`, `saveCard`, `deleteCard`, `listCards`, `login`, `register`, `logout`, `getMe`).
+  - Implemented MSW handlers and fixtures in `web/src/mocks/` with rich domain fixtures ('run', 'bank', 'light'), dynamic `saved` overlay, in-memory sessions, and card persistence.
+  - Implemented UI components and pages:
+    - `Header`: session indicator, mock mode badge, route navigation with saved card count badge.
+    - `SearchPage`: word search bar with sample pill shortcuts, phonetic transcription, client-side Web Speech audio playback (`AudioButton`), senses grouped by POS, and `SenseCard` with interactive `+` → `✓` toggle.
+    - `MyWordsPage`: list of saved cards with search/filter, phonetic playback, and deletion.
+    - `AuthPage`: login and registration tabs.
+  - Implemented mock mode switch (`npm run dev:mock`, `VITE_API_MOCKS=1`) with dynamic import in `main.tsx` and automated exclusion of `mockServiceWorker.js` from `dist/`.
+  - Added test suite with Vitest and Testing Library (11 passing tests across API client, SenseCard, and full App flow).
+  - Added CI workflow `.github/workflows/web.yml`.
 
 ## Tried and rejected
 - Pre-scaffolding backend before Web UI (rejected by Alex): "why do you scafold anything in backend? I believe I made clear instructions that we are implementing web ui now. Based on them we will implement backend."
@@ -78,7 +89,7 @@ None blocking Step 0 Web UI implementation.
 - Yandex terms clarification and key registration: Deferred until after mocked backend is built (by Alex).
 
 ## Next step
-Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim types and client in `web/src/api/`, set up MSW handlers in `web/src/mocks/`, and implement search, sense cards, login/register, and "My words" UI surfaces.
+Align with Alex and ClaudeC-Opus5.5 on Step 0 completion. When ready, proceed to Step 1: scaffold `backend/`, implement FastAPI endpoints and Postgres models based on the proven `web/src/api/` contract, export `docs/api/openapi.json`, and replace interim client with `npm run gen:api`.
 
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
@@ -93,6 +104,7 @@ Scaffold `web/` with Vite + React + TypeScript + Tailwind CSS, establish interim
 - 2026-09-26T18:40:30Z AgyD-Flash3.8: Accepted P16–P19. Updated web/AGENTS.md, web/intent.md, docs/plan.md, root intent.md, backend/intent.md, backend/AGENTS.md, docs/api/README.md, and docs/engineering.md.
 - 2026-09-26T18:44:51Z ClaudeC-Opus5.5: Reviewed fadbc3b; P16–P18 applied as intended; recorded proposals P20–P24 (auth through `src/api/` + MSW, Step 0 exception to the backend-first rule, mock-mode switch kept out of production, leftover step numbers, Step 0 → Step 1 handover check). Handoff-only change.
 - 2026-09-26T18:55:00Z AgyD-Flash3.8: Accepted P20–P24. Updated docs/plan.md, web/intent.md, web/AGENTS.md, docs/engineering.md, and this handoff. Ready to scaffold web/.
+- 2026-09-26T19:22:00Z AgyD-Flash3.8: Scaffolded web/ SPA, implemented interim API client and MSW mock layer, built Search, My Words, and Auth pages, added tests (11 passed), verified lint/typecheck/build/MSW-exclusion, and added web.yml CI pipeline.
 
 ## Outcome
 <!-- Filled in only when archiving. -->
