@@ -25,6 +25,7 @@ Shared across `backend/`, `web/` and `e2e/`. Project-specific commands live in e
 | Tier | Where | Needs | Runs in |
 |---|---|---|---|
 | Unit | `backend/tests/unit`, `web/src/**/*.test.ts(x)` | nothing external; providers and API mocked | every push, seconds |
+| Web UI-only (planned) | `web/` | the MSW mock layer in `web/src/mocks/`, no backend | web CI, once added. Uses the same handlers as the dev mock mode (by Alex) |
 | Backend integration | `backend/tests/integration` (`pytest -m integration`) | real Postgres (`TEST_DATABASE_URL`), migrations applied, fake dictionary provider, app called via `httpx.AsyncClient` | backend CI |
 | Migrations | `backend/tests/integration/test_migrations.py` | Postgres | backend CI; runs upgrade head → downgrade -1 → upgrade head |
 | Contract | CI step | — | backend CI fails if `docs/api/openapi.json` differs from the spec the backend generates; web CI fails if the generated client differs from what's committed |
