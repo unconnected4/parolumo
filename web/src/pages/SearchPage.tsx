@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, X, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { useLookup } from '../hooks/useDictionary';
 import { useCards } from '../hooks/useCards';
+import { useAuth } from '../hooks/useAuth';
 import { SenseCard } from '../components/SenseCard';
 import { AudioButton } from '../components/AudioButton';
 
@@ -16,6 +17,19 @@ export function SearchPage() {
 
   const { data, isLoading, isError, error } = useLookup(activeQuery);
   const { saveCard, isSaving, savingSenseId } = useCards();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Saving needs an account; send signed-out users to sign in instead of failing with 401.
+  const handleSave = (senseId: string) => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+      return;
+    }
+    saveCard(senseId);
+  };
+
+  const isNotFound = error?.status === 404;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,11 +126,10 @@ export function SearchPage() {
         <div className="p-6 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-4 text-rose-800">
           <AlertCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-semibold text-rose-900">Word not found</h3>
+            <h3 className="font-semibold text-rose-900">
+              {isNotFound ? 'Word not found' : 'Lookup failed'}
+            </h3>
             <p className="text-sm mt-1 text-rose-700">{error?.message}</p>
-            <p className="text-xs mt-2 text-rose-600">
-              In Step 0 mock mode, rich fixtures are provided for <strong>run</strong>, <strong>bank</strong>, and <strong>light</strong>.
-            </p>
           </div>
         </div>
       )}
@@ -171,7 +184,7 @@ export function SearchPage() {
                     <SenseCard
                       key={sense.id}
                       sense={sense}
-                      onSave={saveCard}
+                      onSave={handleSave}
                       isSaving={isSaving && savingSenseId === sense.id}
                     />
                   ))}
@@ -179,11 +192,6 @@ export function SearchPage() {
               </div>
             ))}
           </div>
-
-          {/* Yandex Credit Line (per web/intent.md) */}
-          <footer className="pt-6 border-t border-slate-200 text-center text-xs text-slate-400">
-            Dictionary data provided for learning purposes. Powered by Yandex.Dictionary.
-          </footer>
         </div>
       )}
     </div>

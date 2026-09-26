@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from './components/Header';
@@ -5,16 +6,21 @@ import { SearchPage } from './pages/SearchPage';
 import { MyWordsPage } from './pages/MyWordsPage';
 import { AuthPage } from './pages/AuthPage';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 2, // 2 minutes
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+      },
     },
-  },
-});
+  });
+}
 
 export function App() {
+  // One client per App instance, so cached server state (e.g. the signed-in user) never leaks between mounts.
+  const [queryClient] = useState(createQueryClient);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

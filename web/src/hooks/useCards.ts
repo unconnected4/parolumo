@@ -1,12 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteCard, listCards, saveCard, type Card } from '../api';
+import { useAuth } from './useAuth';
 
 export function useCards() {
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
 
+  // Cards belong to a user, so don't ask for them while signed out (the API answers 401).
   const cardsQuery = useQuery<Card[], Error>({
     queryKey: ['cards'],
     queryFn: listCards,
+    enabled: isAuthenticated,
   });
 
   const saveMutation = useMutation({
@@ -27,7 +31,7 @@ export function useCards() {
   });
 
   return {
-    cards: cardsQuery.data ?? [],
+    cards: isAuthenticated ? (cardsQuery.data ?? []) : [],
     isLoading: cardsQuery.isLoading,
     isError: cardsQuery.isError,
     error: cardsQuery.error,

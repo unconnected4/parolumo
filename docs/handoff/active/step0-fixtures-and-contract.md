@@ -4,8 +4,8 @@ title: Step 0 — Web UI implementation with local mocks
 status: in-progress
 branch: main
 started: 2026-09-26T14:38:53Z
-last_updated: 2026-09-26T19:22:00Z
-last_commit: 0ac6f9f
+last_updated: 2026-09-26T19:32:07Z
+last_commit: 29fd97c
 agents: [AgyD-Flash3.8, ClaudeC-Opus5.5]
 related_decisions: [intent.md, docs/plan.md, backend/intent.md, web/intent.md]
 ---
@@ -31,6 +31,8 @@ Acceptance:
 
 ## Current state
 Step 0 Web UI implementation is complete and verified locally. The React + Vite + TypeScript SPA runs in `web/` with interactive search, sense card saving, 'My Words' vocabulary list, and mock authentication behind `web/src/api/` + MSW. Linting, type checking, unit tests (11 passing), and production build with MSW exclusion all pass.
+
+ClaudeC-Opus5.5 reviewed 3dd5343 and 29fd97c and fixed what broke the recorded decisions (see Done). After the fixes: lint and typecheck clean, 16 tests pass, and the production bundle contains no `msw`/`mock` strings and no `mockServiceWorker.js`. Mock mode in a real browser is not yet verified (see Open questions).
 
 ## Done
 - Initialized active handoff for Step 0.
@@ -63,6 +65,14 @@ Step 0 Web UI implementation is complete and verified locally. The React + Vite 
   - Implemented mock mode switch (`npm run dev:mock`, `VITE_API_MOCKS=1`) with dynamic import in `main.tsx` and automated exclusion of `mockServiceWorker.js` from `dist/`.
   - Added test suite with Vitest and Testing Library (11 passing tests across API client, SenseCard, and full App flow).
   - Added CI workflow `.github/workflows/web.yml`.
+- ClaudeC-Opus5.5 review fixes of 29fd97c:
+  - Segregation (by Alex): removed mock-only content from production code: the always-on "Mock Mode" badge in `Header`, the "In Step 0 mock mode…" hint in `SearchPage`, the "auth requests are mocked by MSW" note and the prefilled mock credentials in `AuthPage`. A test now checks the UI shows no "mock"/"MSW" text.
+  - P20 as accepted ("the UI reacts to 401 by showing the login page") was not implemented: `useCards` fetched cards while signed out (401, retried), "My Words" showed an empty deck, and "Save" failed silently. Now the cards query runs only when signed in, "My Words" redirects signed-out users to `/auth`, and "Save" sends them there. Two tests cover it.
+  - The lookup error box said "Word not found" for every failure; it now says "Lookup failed" unless the status is 404. Two tests cover it.
+  - Removed the hard-coded "Powered by Yandex.Dictionary" footer: the data isn't from Yandex, and the credit line belongs to the deferred Yandex integration (by Alex).
+  - MSW handlers: `resetMockStore` now also resets saved cards (it left them stale between tests); `DELETE /api/cards/:id` matches only card IDs (it also matched sense IDs, blurring the contract); `saved` is false for everyone when signed out.
+  - `App` creates its `QueryClient` per instance; the module-level client leaked the signed-in user between tests.
+  - `main.tsx`: if MSW fails to start, the app now logs the error and still renders, instead of leaving a blank page. The catch sits inside the mock-only branch, so the production bundle stays free of mock strings.
 
 ## Tried and rejected
 - Pre-scaffolding backend before Web UI (rejected by Alex): "why do you scafold anything in backend? I believe I made clear instructions that we are implementing web ui now. Based on them we will implement backend."
@@ -84,12 +94,13 @@ Step 0 Web UI implementation is complete and verified locally. The React + Vite 
 - **Dynamic mock overlay for `saved` (P12):** MSW layer in `web/src/mocks/` maintains an in-memory set of saved sense IDs to overlay `saved: bool` on search results dynamically.
 
 ## Open questions
-None blocking Step 0 Web UI implementation.
+- Mock mode (`npm run dev:mock`) is not verified in a real browser. ClaudeC-Opus5.5's embedded browser (Electron) refused to register `mockServiceWorker.js` ("An unknown error occurred when fetching the script") although the file is served with status 200 and matches the installed MSW 2.15.0, so this looks like a limitation of that browser. Next agent or Alex: run `npm run dev:mock` in Chrome or Edge and check that search, Save, My Words and sign in/out work. Only then should Step 0 be called done.
+- Not fixed, for AgyD-Flash3.8 to consider: pages hard-code the sample words "run", "bank", "light" (default query, "Try samples" chips, "Try searching run" link), which only exist in the mock data; the mock keeps one shared card list for every signed-in user, so switching users doesn't show per-user data; React Router logs v7 future-flag warnings in tests.
 - Hosting for backend + Postgres and web SPA: TBD.
 - Yandex terms clarification and key registration: Deferred until after mocked backend is built (by Alex).
 
 ## Next step
-Align with Alex and ClaudeC-Opus5.5 on Step 0 completion. When ready, proceed to Step 1: scaffold `backend/`, implement FastAPI endpoints and Postgres models based on the proven `web/src/api/` contract, export `docs/api/openapi.json`, and replace interim client with `npm run gen:api`.
+Verify mock mode in a real browser (see Open questions). If it works, Step 0 is done; then proceed to Step 1: scaffold `backend/`, implement FastAPI endpoints and Postgres models based on the proven `web/src/api/` contract, export `docs/api/openapi.json`, and replace interim client with `npm run gen:api`.
 
 ## Session log
 - 2026-09-26T14:38:53Z AgyD-Flash3.8: Initialized Step 0 handoff following closure and archiving of ui-first-and-plan-amendments.
@@ -105,6 +116,7 @@ Align with Alex and ClaudeC-Opus5.5 on Step 0 completion. When ready, proceed to
 - 2026-09-26T18:44:51Z ClaudeC-Opus5.5: Reviewed fadbc3b; P16–P18 applied as intended; recorded proposals P20–P24 (auth through `src/api/` + MSW, Step 0 exception to the backend-first rule, mock-mode switch kept out of production, leftover step numbers, Step 0 → Step 1 handover check). Handoff-only change.
 - 2026-09-26T18:55:00Z AgyD-Flash3.8: Accepted P20–P24. Updated docs/plan.md, web/intent.md, web/AGENTS.md, docs/engineering.md, and this handoff. Ready to scaffold web/.
 - 2026-09-26T19:22:00Z AgyD-Flash3.8: Scaffolded web/ SPA, implemented interim API client and MSW mock layer, built Search, My Words, and Auth pages, added tests (11 passed), verified lint/typecheck/build/MSW-exclusion, and added web.yml CI pipeline.
+- 2026-09-26T19:32:07Z ClaudeC-Opus5.5: Reviewed 3dd5343 and 29fd97c; fixed mock content in production UI, missing 401 handling, lookup error wording, Yandex footer, mock store reset, per-test QueryClient and blank page on MSW failure; 16 tests pass, clean bundle; mock mode in a real browser still unverified.
 
 ## Outcome
 <!-- Filled in only when archiving. -->

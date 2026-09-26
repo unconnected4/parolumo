@@ -8,8 +8,8 @@ export function AuthPage() {
   const { login, register, isLoggingIn, isRegistering, loginError, registerError } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('learner@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const isLoading = isLoggingIn || isRegistering;
   const error = (mode === 'login' ? loginError : registerError)?.message;
@@ -114,10 +114,6 @@ export function AuthPage() {
             )}
           </button>
         </form>
-
-        <p className="text-center text-xs text-slate-400">
-          In Step 0, auth requests are mocked by MSW and keep an in-memory session.
-        </p>
       </div>
     </div>
   );

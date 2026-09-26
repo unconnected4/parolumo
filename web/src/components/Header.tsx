@@ -17,9 +17,6 @@ export function Header() {
             <BookOpen className="w-6 h-6 stroke-[2.2]" />
             <span>Paralumo</span>
           </Link>
-          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800 border border-amber-200">
-            Mock Mode
-          </span>
         </div>
 
         {/* Navigation */}

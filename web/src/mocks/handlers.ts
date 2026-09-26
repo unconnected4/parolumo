@@ -3,14 +3,12 @@ import type { Card, Lexeme, Sense, User } from '../api/types';
 import { MOCK_DICTIONARY_FIXTURES } from './fixtures';
 
 // In-memory state for mock sessions and card saves
-let currentUser: User | null = {
+const initialUser = (): User => ({
   id: 'usr_mock_1',
   email: 'learner@example.com',
-};
+});
 
-const savedSenseIds = new Set<string>(['sense_run_v_1']);
-
-const savedCards: Card[] = [
+const initialCards = (): Card[] => [
   {
     id: 'card_mock_1',
     sense_id: 'sense_run_v_1',
@@ -30,6 +28,10 @@ const savedCards: Card[] = [
     notes: 'Common verb with irregular forms: run - ran - run',
   },
 ];
+
+let currentUser: User | null = initialUser();
+const savedCards: Card[] = initialCards();
+const savedSenseIds = new Set<string>(savedCards.map((c) => c.sense_id));
 
 function findSenseAcrossFixtures(senseId: string): { sense: Sense; lexeme: Lexeme } | null {
   for (const lexemes of Object.values(MOCK_DICTIONARY_FIXTURES)) {
@@ -62,12 +64,12 @@ export const handlers = [
       );
     }
 
-    // Dynamic overlay for `saved` state (P12)
+    // Dynamic overlay for `saved` state (P12). Saved is per-user, so nothing is saved when signed out.
     const overlaidLexemes: Lexeme[] = fixture.map((lex) => ({
       ...lex,
       senses: lex.senses.map((s) => ({
         ...s,
-        saved: savedSenseIds.has(s.id),
+        saved: currentUser !== null && savedSenseIds.has(s.id),
       })),
     }));
 
@@ -134,7 +136,7 @@ export const handlers = [
     }
 
     const id = params.id as string;
-    const index = savedCards.findIndex((c) => c.id === id || c.sense_id === id);
+    const index = savedCards.findIndex((c) => c.id === id);
     if (index !== -1) {
       const removed = savedCards.splice(index, 1)[0];
       savedSenseIds.delete(removed.sense_id);
@@ -187,7 +189,8 @@ export const handlers = [
 
 // Helper to reset mocks in tests
 export function resetMockStore(): void {
-  currentUser = { id: 'usr_mock_1', email: 'learner@example.com' };
+  currentUser = initialUser();
+  savedCards.splice(0, savedCards.length, ...initialCards());
   savedSenseIds.clear();
-  savedSenseIds.add('sense_run_v_1');
+  savedCards.forEach((c) => savedSenseIds.add(c.sense_id));
 }

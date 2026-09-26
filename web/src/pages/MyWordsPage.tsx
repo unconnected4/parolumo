@@ -1,12 +1,20 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Bookmark, Trash2, Search, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { useCards } from '../hooks/useCards';
+import { useAuth } from '../hooks/useAuth';
 import { AudioButton } from '../components/AudioButton';
 
 export function MyWordsPage() {
-  const { cards, isLoading, deleteCard, isDeleting, deletingCardId } = useCards();
+  const { cards, isLoading: isCardsLoading, deleteCard, isDeleting, deletingCardId } = useCards();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const isLoading = isCardsLoading || isAuthLoading;
   const [filterQuery, setFilterQuery] = useState('');
+
+  // "My words" is per-user: signed-out visitors go to sign in rather than seeing an empty deck.
+  if (!isAuthLoading && !isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const filteredCards = cards.filter((card) => {
     if (!filterQuery.trim()) return true;
