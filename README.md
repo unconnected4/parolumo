@@ -1,6 +1,8 @@
 # Paralumo
 
-English→Russian vocabulary app with a dictionary and spaced-repetition practice.
+Vocabulary app: look words up in a dictionary, save individual senses, and practise them with spaced repetition.
+
+The product is not tied to one language pair. English→Russian is the first pair implemented, chosen to get a stable project skeleton working end to end (search → save → practice). More pairs and dictionary providers come after that.
 
 - What and why: [intent.md](intent.md)
 - Repo map and agent instructions: [AGENTS.md](AGENTS.md)

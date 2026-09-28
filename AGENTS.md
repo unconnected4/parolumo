@@ -2,7 +2,7 @@
 
 Shared instructions for every coding agent working on this repo (Claude, Codex, Copilot, Cursor, Gemini, …). Tool-specific files such as `CLAUDE.md` should only import or point to this file and add notes that apply to that tool alone.
 
-Vocabulary app: English→Russian dictionary with per-sense saving and spaced-repetition practice. Product intent and build order: [intent.md](intent.md).
+Vocabulary app: dictionary lookup with per-sense saving and spaced-repetition practice. English→Russian is only the first language pair, used to stabilise the project skeleton. Product intent and build order: [intent.md](intent.md).
 
 ## Repo map
 - `backend/`: FastAPI JSON API. Commands and rules: [backend/AGENTS.md](backend/AGENTS.md)
